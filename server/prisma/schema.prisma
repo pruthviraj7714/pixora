@@ -33,13 +33,13 @@ model Post {
   description String?
   image       String
   category    String
-  isApproved  Boolean     @default(false)
+  status      PostStatus  @default(PENDING)
   likes       Int
   comments    Comment[]
   createdAt   DateTime    @default(now())
   savedBy     SavedPost[]
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Comment {
@@ -47,21 +47,27 @@ model Comment {
   text      String
   userId    String
   postId    String
-  post      Post     @relation(fields: [postId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model SavedPost {
   id     String @id @default(uuid())
   userId String
   postId String
-  post   Post   @relation(fields: [postId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum Role {
   USER
   ADMIN
+}
+
+enum PostStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
