@@ -15,9 +15,9 @@ app.get("/", (req, res) => {
   });
 });
 
-app.use("/user", userRouter);
-app.use("/post", postRouter);
-app.use('"/admin', adminRouter);
+app.use('/user', userRouter);
+app.use('/post', postRouter);
+app.use('/admin', adminRouter);
 
 app.listen(3000, () => {
   console.log("server is listening on port 3000");

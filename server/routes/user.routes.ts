@@ -2,7 +2,7 @@ import { Router } from "express";
 import { ProfileUpdateSchema, SigninSchema, SignupSchema } from "../zod/schema";
 import { hash, compare } from "bcrypt";
 import prisma from "../db";
-import { FRONTEND_URL, USER_JWT_SECRET } from "../config";
+import { ADMIN_JWT_SECRET, FRONTEND_URL, USER_JWT_SECRET } from "../config";
 import jwt from "jsonwebtoken";
 import authMiddleware from "../middlewares/user.middleware";
 
@@ -13,14 +13,14 @@ userRouter.post("/signup", async (req, res) => {
     const { success, data, error } = SignupSchema.safeParse(req.body);
 
     if (!success) {
-      res.status(401).json({
+      res.status(400).json({
         message: "Validation Failed",
         error: error,
       });
       return;
     }
 
-    const { username, email, password } = data;
+    const { username, email, password, firstname, lastname } = data;
 
     const isUserAlreadyExists = await prisma.user.findFirst({
       where: {
@@ -46,6 +46,8 @@ userRouter.post("/signup", async (req, res) => {
 
     await prisma.user.create({
       data: {
+        firstname,
+        lastname,
         username,
         password: hashedPassword,
         email,
@@ -67,7 +69,7 @@ userRouter.post("/signin", async (req, res) => {
     const { data, success, error } = SigninSchema.safeParse(req.body);
 
     if (!success) {
-      res.status(401).json({
+      res.status(400).json({
         message: "Validation Failed",
         error,
       });
@@ -89,10 +91,10 @@ userRouter.post("/signin", async (req, res) => {
       return;
     }
 
-    const isPasswordCorrect = await compare(user.password, password);
+    const isPasswordCorrect = await compare(password, user.password);
 
     if (!isPasswordCorrect) {
-      res.status(403).json({
+      res.status(401).json({
         message: "Incorrect Password",
       });
       return;
@@ -103,15 +105,14 @@ userRouter.post("/signin", async (req, res) => {
         id: user.id,
         role: user.role,
       },
-      USER_JWT_SECRET
+      user.role === "ADMIN" ? ADMIN_JWT_SECRET : USER_JWT_SECRET
     );
-
-    if (user.role === "ADMIN") {
-      res.redirect(`${FRONTEND_URL}/admin-dashboard?token=${token}`);
-    }
 
     res.status(200).json({
       message: "User Successfully Logged In!",
+      id: user.id,
+      token,
+      role : user.role
     });
   } catch (error) {
     res.status(500).json({

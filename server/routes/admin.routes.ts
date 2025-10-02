@@ -139,7 +139,7 @@ adminRouter.get("/media", adminMiddleware, async (req, res) => {
   }
 });
 
-adminRouter.get("/pending-approval", adminMiddleware, async (req, res) => {
+adminRouter.get("/pending-approvals", adminMiddleware, async (req, res) => {
   try {
     const pendingPosts = await prisma.post.findMany({
       where: {
@@ -160,47 +160,21 @@ adminRouter.get("/pending-approval", adminMiddleware, async (req, res) => {
 
 adminRouter.get("/", adminMiddleware, async (req, res) => {
   try {
-    const { page = "1", limit = "10", role, search } = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
-
-    const where: any = {};
-    if (role) where.role = role;
-    if (search) {
-      where.OR = [
-        { username: { contains: search as string, mode: "insensitive" } },
-        { email: { contains: search as string, mode: "insensitive" } },
-      ];
-    }
-
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
-        skip,
-        take: Number(limit),
-        select: {
-          id: true,
-          username: true,
-          email: true,
-          role: true,
-          createdAt: true,
-          _count: {
-            select: { posts: true, comments: true, savedPosts: true },
-          },
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        _count: {
+          select: { posts: true, comments: true, savedPosts: true },
         },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.user.count({ where }),
-    ]);
-
-    res.json({
-      users,
-      pagination: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / Number(limit)),
       },
+      orderBy: { createdAt: "desc" },
     });
+
+    res.json({ users });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch users" });
   }
@@ -256,50 +230,17 @@ adminRouter.delete("/:id", adminMiddleware, async (req, res) => {
 
 adminRouter.get("/", adminMiddleware, async (req, res) => {
   try {
-    const {
-      page = "1",
-      limit = "10",
-      category,
-      status,
-      search,
-    } = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
-
-    const where: any = {};
-    if (category) where.category = category;
-    if (status !== undefined) where.status = status === "APPROVED";
-    if (search) {
-      where.OR = [
-        { title: { contains: search as string, mode: "insensitive" } },
-        { description: { contains: search as string, mode: "insensitive" } },
-      ];
-    }
-
-    const [posts, total] = await Promise.all([
-      prisma.post.findMany({
-        where,
-        skip,
-        take: Number(limit),
-        include: {
-          user: { select: { id: true, username: true, email: true } },
-          _count: {
-            select: { comments: true, savedBy: true },
-          },
+    const posts = await prisma.post.findMany({
+      include: {
+        user: { select: { id: true, username: true, email: true } },
+        _count: {
+          select: { comments: true, savedBy: true },
         },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.post.count({ where }),
-    ]);
-
-    res.json({
-      posts,
-      pagination: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / Number(limit)),
       },
+      orderBy: { createdAt: "desc" },
     });
+
+    res.json({ posts });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch media" });
   }
@@ -317,6 +258,14 @@ adminRouter.put("/:id/approve", adminMiddleware, async (req, res) => {
       },
     });
 
+    await prisma.notification.create({
+      data: {
+        postId: post.id,
+        type: "MEDIA_APPROVED",
+        userId: post.userId,
+      },
+    });
+
     res.json({ message: "Media approved successfully", post });
   } catch (error) {
     res.status(500).json({ error: "Failed to approve media" });
@@ -326,12 +275,22 @@ adminRouter.put("/:id/approve", adminMiddleware, async (req, res) => {
 adminRouter.put("/:id/reject", adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    const { message } = req.body;
 
     const post = await prisma.post.update({
       where: { id },
       data: { status: "REJECTED" },
       include: {
         user: { select: { username: true, email: true } },
+      },
+    });
+
+    await prisma.notification.create({
+      data: {
+        postId: post.id,
+        type: "MEDIA_REJECTED",
+        userId: post.userId,
+        message,
       },
     });
 
@@ -346,7 +305,7 @@ adminRouter.delete("/:id", adminMiddleware, async (req, res) => {
     const { id } = req.params;
 
     await prisma.post.delete({ where: { id } }),
-    res.status(200).json({ message: "Media deleted successfully" });
+      res.status(200).json({ message: "Media deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete media" });
   }
