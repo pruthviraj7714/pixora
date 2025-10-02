@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const SignupSchema = z.object({
-  firstname: z.string().min(5, {}),
-  lastname: z.string().min(5, {}),
+  firstname: z.string(),
+  lastname: z.string(),
   username: z
     .string()
     .min(5, { error: "Username Should be greater than 5 characters" }),

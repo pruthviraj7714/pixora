@@ -158,7 +158,7 @@ adminRouter.get("/pending-approvals", adminMiddleware, async (req, res) => {
   }
 });
 
-adminRouter.get("/", adminMiddleware, async (req, res) => {
+adminRouter.get("/users/list", adminMiddleware, async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       select: {
@@ -228,7 +228,7 @@ adminRouter.delete("/:id", adminMiddleware, async (req, res) => {
   }
 });
 
-adminRouter.get("/", adminMiddleware, async (req, res) => {
+adminRouter.get("/media/list", adminMiddleware, async (req, res) => {
   try {
     const posts = await prisma.post.findMany({
       include: {

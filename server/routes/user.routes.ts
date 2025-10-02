@@ -112,7 +112,8 @@ userRouter.post("/signin", async (req, res) => {
       message: "User Successfully Logged In!",
       id: user.id,
       token,
-      role : user.role
+      role : user.role,
+      username : user.username
     });
   } catch (error) {
     res.status(500).json({
