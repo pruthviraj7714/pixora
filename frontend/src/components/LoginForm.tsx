@@ -6,12 +6,10 @@ import { Input } from "./ui/input";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Loader2Icon } from "lucide-react";
 
 export default function LogInForm() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -25,6 +23,7 @@ export default function LogInForm() {
       const result = await signIn("credentials", {
         username,
         password,
+        callbackUrl : "/home"
       });
 
       if (result?.error) {

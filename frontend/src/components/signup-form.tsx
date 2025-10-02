@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { toast } from "sonner";
 import { Loader2Icon } from "lucide-react";
+import { BACKEND_URL } from "@/lib/config";
 
 export default function SignupForm() {
   const router = useRouter();
@@ -17,16 +18,14 @@ export default function SignupForm() {
     e.preventDefault();
     setIsLoading(true);
     const formData = new FormData(e.currentTarget);
-    console.log(formData);
     const data = Object.fromEntries(formData.entries());
-    console.log(data);
 
     try {
-      await axios.post("/signup", data);
+      await axios.post(`${BACKEND_URL}/user/signup`, data);
       toast.success("Account created successfully", {
         description: "You can now log in with your credentials.",
       });
-      router.push("/auth/signin");
+      router.push("/signin");
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message || "An error occurred during signup.";

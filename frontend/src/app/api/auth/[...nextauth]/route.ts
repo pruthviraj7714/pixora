@@ -12,21 +12,20 @@ const authOptions: AuthOptions = {
         password: { label: "Password", type: "text" },
       },
       async authorize(credentials, req) {
-        console.log(credentials);
-        
         const res = await axios.post(`${BACKEND_URL}/user/signin`, {
-            username: credentials?.username,
-            password: credentials?.password,
+          username: credentials?.username,
+          password: credentials?.password,
         });
 
-        if (res.status !== 200) return null;
+        if (res.status !== 200) return null; 
 
         if (!res.data.token) return null;
 
         return {
           id: res.data.id,
           token: res.data.token,
-          role : res.data.role,
+          role: res.data.role,
+          username : res.data.username
         };
       },
     }),
@@ -37,6 +36,7 @@ const authOptions: AuthOptions = {
         token.accessToken = user.token;
         token.id = user.id;
         token.role = user.role;
+        token.username = user.username;
       }
       return token;
     },
@@ -45,6 +45,8 @@ const authOptions: AuthOptions = {
         ...session.user,
         id: token.id as string,
         role: token.role,
+        username : token.username
+
       };
       (session as any).accessToken = token.accessToken;
       return session;
