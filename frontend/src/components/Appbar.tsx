@@ -23,11 +23,43 @@ import {
 import { Button } from "./ui/button";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Loader2, LogOut, PlusCircle } from "lucide-react";
+import { Bell, Loader2, LogOut, PlusCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import axios from "axios";
+import { BACKEND_URL } from "@/lib/config";
+
+type Notification = {
+  id: string;
+  message: string;
+  type: string;
+  read: boolean;
+  createdAt: string;
+};
 
 export default function Appbar() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_URL}/notifications`, {
+        headers: {
+          Authorization: `Bearer ${session?.accessToken}`,
+        },
+      });
+      setNotifications(res.data);
+    } catch (error: any) {
+      toast.error("Error while fetching notifications: ", error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchNotifications();
+    }
+  }, [status]);
 
   return (
     <header className="bg-gradient-to-r from-pink-100 via-pink-200 to-pink-300 shadow-lg transition-all duration-300 ease-in-out">
@@ -36,8 +68,8 @@ export default function Appbar() {
           <Link href="/home">
             <div className="text-2xl font-extrabold">
               <span className="text-orange-400">
-                Interest
-                <span className="text-pink-400">Gallery</span>
+                Pixo
+                <span className="text-pink-400">ra</span>
               </span>
             </div>
           </Link>
@@ -52,6 +84,53 @@ export default function Appbar() {
         </div>
 
         <div className="flex gap-4 items-center mr-5">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="relative h-10 w-10 rounded-full border-2 bg-white border-gray-200 hover:border-black flex justify-center items-center">
+                <Bell className="w-5 h-5 text-pink-600" />
+                {notifications.some((n) => !n.read) && (
+                  <span className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                    {notifications.filter((n) => !n.read).length}
+                  </span>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-72 bg-white shadow-lg rounded-lg border border-pink-300">
+              <DropdownMenuLabel className="font-semibold text-pink-600">
+                Notifications
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+
+              {notifications.length === 0 ? (
+                <DropdownMenuItem className="text-gray-500">
+                  No notifications yet
+                </DropdownMenuItem>
+              ) : (
+                notifications.map((notif) => (
+                  <DropdownMenuItem
+                    key={notif.id}
+                    className={`cursor-pointer flex flex-col items-start ${
+                      notif.read ? "bg-white" : "bg-pink-50"
+                    }`}
+                  >
+                    <span
+                      className={`text-sm ${
+                        notif.type === "MEDIA_APPROVED"
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {notif.message}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(notif.createdAt).toLocaleString()}
+                    </span>
+                  </DropdownMenuItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger>
               <span className="h-10 w-10 rounded-full border-2 bg-white border-gray-200 hover:border-black flex justify-center items-center">
@@ -76,7 +155,7 @@ export default function Appbar() {
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/saved-pins")}
+                onClick={() => router.push("/saved-posts")}
                 className="cursor-pointer text-md hover:bg-pink-100"
               >
                 Saved Pins

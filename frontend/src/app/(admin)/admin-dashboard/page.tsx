@@ -1,22 +1,34 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Users, FileText, MessageSquare, TrendingUp, CheckCircle, Clock, Trash2, X, Check, IconNode } from 'lucide-react';
-import { BACKEND_URL } from '@/lib/config';
-import axios from 'axios'
-import { useSession } from 'next-auth/react';
+import React, { useState, useEffect } from "react";
+import {
+  Users,
+  FileText,
+  MessageSquare,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  Trash2,
+  X,
+  Check,
+  IconNode,
+} from "lucide-react";
+import { BACKEND_URL } from "@/lib/config";
+import axios from "axios";
+import { useSession } from "next-auth/react";
+import { IPost } from "@/types/post";
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [dashboardData, setDashboardData] = useState(null);
   const [usersData, setUsersData] = useState(null);
   const [mediaData, setMediaData] = useState(null);
-  const [pendingPosts, setPendingPosts] = useState([]);
+  const [pendingPosts, setPendingPosts] = useState<IPost[]>([]);
   const [allUsers, setAllUsers] = useState([]);
-  const [allPosts, setAllPosts] = useState([]);
+  const [allPosts, setAllPosts] = useState<IPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [rejectMessage, setRejectMessage] = useState('');
+  const [selectedPost, setSelectedPost] = useState<IPost | null>(null);
+  const [rejectMessage, setRejectMessage] = useState("");
   const { data } = useSession();
 
   useEffect(() => {
@@ -31,7 +43,7 @@ export default function AdminDashboard() {
       Authorization: `Bearer ${data?.accessToken}`,
     },
   });
-  
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -41,27 +53,31 @@ export default function AdminDashboard() {
           setDashboardData(dashboard);
           break;
         }
-  
+
         case "users": {
           const { data: users } = await axiosAuth.get("/admin/users");
           setUsersData(users);
-  
-          const { data: allUsersData } = await axiosAuth.get("/admin/users/list");
+
+          const { data: allUsersData } = await axiosAuth.get(
+            "/admin/users/list"
+          );
           setAllUsers(allUsersData.users || []);
           break;
         }
-  
+
         case "media": {
           const { data: media } = await axiosAuth.get("/admin/media");
           setMediaData(media);
-  
+
           const { data: posts } = await axiosAuth.get("/admin/posts");
           setAllPosts(posts.posts || []);
           break;
         }
-  
+
         case "approvals": {
-          const { data: pending } = await axiosAuth.get("/admin/pending-approvals");
+          const { data: pending } = await axiosAuth.get(
+            "/admin/pending-approvals"
+          );
           setPendingPosts(pending);
           break;
         }
@@ -71,7 +87,7 @@ export default function AdminDashboard() {
     }
     setLoading(false);
   };
-  
+
   const handleApprove = async (postId: string) => {
     try {
       await axiosAuth.put(`/admin/posts/${postId}/approve`);
@@ -81,7 +97,7 @@ export default function AdminDashboard() {
       console.error("Error approving post:", error);
     }
   };
-  
+
   const handleReject = async (postId: string) => {
     try {
       await axiosAuth.put(`/admin/posts/${postId}/reject`, {
@@ -94,7 +110,7 @@ export default function AdminDashboard() {
       console.error("Error rejecting post:", error);
     }
   };
-  
+
   const handleDeleteUser = async (userId: string) => {
     if (confirm("Are you sure you want to delete this user?")) {
       try {
@@ -105,7 +121,7 @@ export default function AdminDashboard() {
       }
     }
   };
-  
+
   const handleDeletePost = async (postId: string) => {
     if (confirm("Are you sure you want to delete this post?")) {
       try {
@@ -117,12 +133,18 @@ export default function AdminDashboard() {
     }
   };
 
-  const StatCard = ({ icon: Icon, title, value, subtitle, color } : {
-    icon : IconNode,
-    title : string,
-    value  : string,
-    subtitle : string,
-    color : string
+  const StatCard = ({
+    icon: Icon,
+    title,
+    value,
+    subtitle,
+    color,
+  }: {
+    icon: IconNode;
+    title: string;
+    value: string;
+    subtitle: string;
+    color: string;
   }) => (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex items-center justify-between">
@@ -151,21 +173,23 @@ export default function AdminDashboard() {
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Admin Dashboard
+            </h1>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex space-x-4 mb-8 border-b">
-          {['overview', 'users', 'media', 'approvals'].map(tab => (
+          {["overview", "users", "media", "approvals"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`pb-4 px-4 font-medium capitalize transition-colors ${
                 activeTab === tab
-                  ? 'border-b-2 border-blue-600 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               {tab}
@@ -173,7 +197,7 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {activeTab === 'overview' && dashboardData && (
+        {activeTab === "overview" && dashboardData && (
           <div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <StatCard
@@ -205,21 +229,33 @@ export default function AdminDashboard() {
 
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">Recent Posts</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Recent Posts
+                </h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Author</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Likes</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Title
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Author
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Likes
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Date
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {dashboardData.recentPosts.map(post => (
+                    {dashboardData.recentPosts.map((post) => (
                       <tr key={post.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {post.title}
@@ -228,11 +264,15 @@ export default function AdminDashboard() {
                           {post.user.username}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            post.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                            post.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              post.status === "APPROVED"
+                                ? "bg-green-100 text-green-800"
+                                : post.status === "PENDING"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
                             {post.status}
                           </span>
                         </td>
@@ -251,7 +291,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'users' && usersData && (
+        {activeTab === "users" && usersData && (
           <div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <StatCard
@@ -283,22 +323,36 @@ export default function AdminDashboard() {
 
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">All Users</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  All Users
+                </h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Posts</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Username
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Role
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Posts
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Joined
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {allUsers.map(user => (
+                    {allUsers.map((user) => (
                       <tr key={user.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {user.username}
@@ -307,9 +361,13 @@ export default function AdminDashboard() {
                           {user.email}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              user.role === "ADMIN"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
                             {user.role}
                           </span>
                         </td>
@@ -336,7 +394,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'media' && mediaData && (
+        {activeTab === "media" && mediaData && (
           <div>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
               <StatCard
@@ -373,22 +431,36 @@ export default function AdminDashboard() {
 
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">All Media</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  All Media
+                </h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Author</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Likes</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Title
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Author
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Category
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Likes
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {allPosts.map(post => (
+                    {allPosts.map((post) => (
                       <tr key={post.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {post.title}
@@ -400,11 +472,15 @@ export default function AdminDashboard() {
                           {post.category}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            post.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                            post.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              post.status === "APPROVED"
+                                ? "bg-green-100 text-green-800"
+                                : post.status === "PENDING"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
                             {post.status}
                           </span>
                         </td>
@@ -428,28 +504,37 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'approvals' && (
+        {activeTab === "approvals" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {pendingPosts.length === 0 ? (
               <div className="col-span-full text-center py-12 text-gray-500">
                 No pending approvals
               </div>
             ) : (
-              pendingPosts.map(post => (
-                <div key={post.id} className="bg-white rounded-lg shadow overflow-hidden">
-                  {post.mediaUrl && (
+              pendingPosts.map((post) => (
+                <div
+                  key={post.id}
+                  className="bg-white rounded-lg shadow overflow-hidden"
+                >
+                  {post.image && (
                     <img
-                      src={post.mediaUrl}
+                      src={post.image}
                       alt={post.title}
                       className="w-full h-48 object-cover"
                     />
                   )}
                   <div className="p-4">
                     <h3 className="font-semibold text-lg mb-2">{post.title}</h3>
-                    <p className="text-gray-600 text-sm mb-2">{post.description}</p>
+                    <p className="text-gray-600 text-sm mb-2">
+                      {post.description}
+                    </p>
                     <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                      <span className="bg-gray-100 px-2 py-1 rounded">{post.category}</span>
-                      <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                      <span className="bg-gray-100 px-2 py-1 rounded">
+                        {post.category}
+                      </span>
+                      <span>
+                        {new Date(post.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
                     <div className="flex space-x-2">
                       <button
@@ -479,7 +564,9 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <h3 className="text-xl font-semibold mb-4">Reject Post</h3>
-            <p className="text-gray-600 mb-4">Provide a reason for rejection:</p>
+            <p className="text-gray-600 mb-4">
+              Provide a reason for rejection:
+            </p>
             <textarea
               value={rejectMessage}
               onChange={(e) => setRejectMessage(e.target.value)}
@@ -496,7 +583,7 @@ export default function AdminDashboard() {
               <button
                 onClick={() => {
                   setSelectedPost(null);
-                  setRejectMessage('');
+                  setRejectMessage("");
                 }}
                 className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
               >

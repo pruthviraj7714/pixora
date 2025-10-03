@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { BACKEND_URL } from "@/lib/config";
+import { useSession } from "next-auth/react";
 
 export default function CreatePost() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -23,6 +25,7 @@ export default function CreatePost() {
   const [category, setCategory] = useState<string>("");
   const [currFile, setCurrFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const { data } = useSession();
   const router = useRouter();
 
   const uploadImageToCloudinary = async ({ file }: { file: File }) => {
@@ -30,9 +33,9 @@ export default function CreatePost() {
     formData.append("file", file);
 
     try {
-      const response = await axios.post("/api/pin/upload", formData, {
+      const response = await axios.post(`${BACKEND_URL}/cloudinary/upload`, formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          Authorization : `Bearer ${data?.accessToken}`,
         },
       });
       return response.data.result.url;
@@ -67,16 +70,20 @@ export default function CreatePost() {
     }
 
     try {
-      await axios.post("/api/pin/post", {
+      await axios.post(`${BACKEND_URL}/posts/create`, {
         image: imgUrl,
         title,
         description,
         category,
+      }, {
+        headers : {
+          Authorization : `Bearer ${data?.accessToken}`
+        }
       });
-      toast.success("Pin created successfully");
+      toast.success("Post successfully Added");
       router.push("/home");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to create pin");
+      toast.error(error?.response?.data?.message || "Failed to Post the media");
     } finally {
       setIsUploading(false);
     }
@@ -86,7 +93,7 @@ export default function CreatePost() {
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-300 flex items-center justify-center p-6">
       <div className="bg-white shadow-xl rounded-lg p-8 w-full max-w-5xl h-full md:h-[700px]">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">
-          Create a New Pin
+          Create a New Post
         </h1>
         <div className="flex flex-col md:flex-row md:space-x-8 space-y-6 md:space-y-0">
           <div className="md:w-1/2 w-full">
@@ -149,7 +156,7 @@ export default function CreatePost() {
               <Textarea
                 id="description"
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Tell everyone what your Pin is about"
+                placeholder="Tell everyone what your Post is about"
                 className="rounded-lg border-gray-300 focus:ring-2 focus:ring-violet-500 transition duration-200"
               />
             </div>
@@ -181,7 +188,7 @@ export default function CreatePost() {
                 isUploading ? "text-white animate-pulse" : "text-white"
               } font-bold py-2 px-4 rounded-full transition duration-200`}
             >
-              {isUploading ? "Uploading..." : "Create Pin"}
+              {isUploading ? "Uploading..." : "Add Post"}
             </Button>
           </div>
         </div>
