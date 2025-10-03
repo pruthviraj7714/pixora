@@ -1,3 +1,4 @@
+import { IComment } from "./comment";
 
 export interface IPost {
     id: string;
@@ -5,6 +6,10 @@ export interface IPost {
     title: string;
     description: string;
     image: string;
+    user : {
+      username : string;
+    },
+    comments  : IComment[],
     category: string;
     status: "PENDING" | "APPROVED" | "REJECTED";
     likes: number;
