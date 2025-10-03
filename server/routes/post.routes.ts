@@ -72,6 +72,14 @@ postRouter.get("/:id", async (req, res) => {
       where: {
         id,
       },
+      include : {
+        comments : true,
+        user : {
+          select : {
+            username : true
+          }
+        }
+      }
     });
 
     res.status(200).json(post);

@@ -3,11 +3,6 @@ import { Router } from "express";
 import authMiddleware from "../middlewares/user.middleware";
 import multer from "multer";
 
-interface CloudinaryUploadResult {
-  public_id: string;
-  [key: string]: any;
-}
-
 const cloudinaryRouter = Router();
 
 const upload = multer();

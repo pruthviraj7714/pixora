@@ -5,6 +5,7 @@ import postRouter from "./routes/post.routes";
 import adminRouter from "./routes/admin.routes";
 import cloudinaryRouter from "./routes/cloudinary.route";
 import notificationRouter from "./routes/notification.routes";
+import commentRouter from "./routes/comment.routes";
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use('/posts', postRouter);
 app.use('/admin', adminRouter);
 app.use('/cloudinary', cloudinaryRouter);
 app.use('/notifications', notificationRouter);
+app.use('/comment', commentRouter);
 
 app.listen(3001, () => {
   console.log("server is listening on port 3001");

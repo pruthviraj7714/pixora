@@ -263,6 +263,8 @@ adminRouter.put("/posts/:id/approve", adminMiddleware, async (req, res) => {
         postId: post.id,
         type: "MEDIA_APPROVED",
         userId: post.userId,
+        mediaTitle : post.title,
+        mediaUrl : post.image,
       },
     });
 
@@ -291,6 +293,8 @@ adminRouter.put("/posts/:id/reject", adminMiddleware, async (req, res) => {
         type: "MEDIA_REJECTED",
         userId: post.userId,
         message,
+        mediaTitle : post.title,
+        mediaUrl : post.image,
       },
     });
 

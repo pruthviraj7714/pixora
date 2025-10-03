@@ -18,7 +18,7 @@ model User {
   id            String         @id @default(uuid())
   username      String         @unique
   firstname     String
-  lastname       String
+  lastname      String
   email         String         @unique
   password      String         @unique
   role          Role           @default(USER)
@@ -65,14 +65,16 @@ model SavedPost {
 }
 
 model Notification {
-  id        String           @id @default(uuid())
-  userId    String
-  type      NotificationType
-  read      Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  message   String?
-  postId    String
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String           @id @default(uuid())
+  userId     String
+  type       NotificationType
+  read       Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+  message    String?
+  postId     String
+  mediaUrl   String
+  mediaTitle String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum Role {

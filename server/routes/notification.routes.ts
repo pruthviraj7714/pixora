@@ -11,7 +11,16 @@ notificationRouter.get("/", authMiddleware, async (req, res) => {
     const notifications = await prisma.notification.findMany({
       where: {
         userId,
-        read: false,
+      },
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
@@ -23,27 +32,19 @@ notificationRouter.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-notificationRouter.put("/", authMiddleware, async (req, res) => {
+notificationRouter.get("/count", authMiddleware, async (req, res) => {
   try {
     const userId = req.userId!;
-    const notificationIds = req.body.notificationIds;
 
-    await Promise.all(
-      notificationIds.forEach(async (notificationId: string) => {
-        await prisma.notification.update({
-          where: {
-            id: notificationId,
-            userId,
-          },
-          data: {
-            read: true,
-          },
-        });
-      })
-    );
+    const count = await prisma.notification.count({
+      where: {
+        userId,
+        read: false,
+      },
+    });
 
     res.status(200).json({
-      message: "All Notifications Successfully Read By User",
+      count,
     });
   } catch (error) {
     res.status(500).json({
@@ -51,5 +52,34 @@ notificationRouter.put("/", authMiddleware, async (req, res) => {
     });
   }
 });
+
+notificationRouter.patch(
+  "/:notificationId/read",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const notificationId = req.params.notificationId;
+
+      await prisma.notification.update({
+        where: {
+          id: notificationId,
+          userId,
+        },
+        data: {
+          read: true,
+        },
+      });
+
+      res.status(200).json({
+        message: "All Notifications Successfully Read By User",
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Internal Server Error",
+      });
+    }
+  }
+);
 
 export default notificationRouter;
