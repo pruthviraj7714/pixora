@@ -132,6 +132,11 @@ userRouter.get("/me", authMiddleware, async (req, res) => {
       },
       include: {
         posts: true,
+        savedPosts : {
+          include : {
+            post : true
+          }
+        }
       },
     });
 
