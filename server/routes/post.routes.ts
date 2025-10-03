@@ -44,9 +44,19 @@ postRouter.post("/create", authMiddleware, async (req, res) => {
 
 postRouter.get("/", async (req, res) => {
   try {
-    const posts = await prisma.post.findMany();
-
-    res.status(200).json(posts);
+    const posts = await prisma.post.findMany({
+      where : {
+        status : "APPROVED"
+      },
+      include : {
+        user : {
+          select : {
+            username : true,
+          }
+        }
+      }
+    });
+    res.status(200).json(posts || []);
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",

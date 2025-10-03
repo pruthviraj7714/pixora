@@ -23,8 +23,8 @@ export const ProfileUpdateSchema = z.object({
 });
 
 export const PostCreateSchema = z.object({
-  title: z.string().min(5, { error: "" }),
-  description: z.string().min(10, { error: "" }),
-  image: z.string().min(10, { error: "" }),
-  category: z.string().min(5, { error: "" }),
+  title: z.string(),
+  description: z.string(),
+  image: z.string(),
+  category: z.string(),
 });

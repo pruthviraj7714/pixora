@@ -246,7 +246,7 @@ adminRouter.get("/media/list", adminMiddleware, async (req, res) => {
   }
 });
 
-adminRouter.put("/:id/approve", adminMiddleware, async (req, res) => {
+adminRouter.put("/posts/:id/approve", adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -272,7 +272,7 @@ adminRouter.put("/:id/approve", adminMiddleware, async (req, res) => {
   }
 });
 
-adminRouter.put("/:id/reject", adminMiddleware, async (req, res) => {
+adminRouter.put("/posts/:id/reject", adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { message } = req.body;

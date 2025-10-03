@@ -3,6 +3,8 @@ import cors from "cors";
 import userRouter from "./routes/user.routes";
 import postRouter from "./routes/post.routes";
 import adminRouter from "./routes/admin.routes";
+import cloudinaryRouter from "./routes/cloudinary.route";
+import notificationRouter from "./routes/notification.routes";
 
 const app = express();
 
@@ -16,8 +18,10 @@ app.get("/", (req, res) => {
 });
 
 app.use('/user', userRouter);
-app.use('/post', postRouter);
+app.use('/posts', postRouter);
 app.use('/admin', adminRouter);
+app.use('/cloudinary', cloudinaryRouter);
+app.use('/notifications', notificationRouter);
 
 app.listen(3001, () => {
   console.log("server is listening on port 3001");
