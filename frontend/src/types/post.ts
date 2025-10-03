@@ -15,3 +15,11 @@ export interface IPost {
     likes: number;
     createdAt: Date;
   }
+
+
+  export interface ISavedPost {
+    id: string;
+    userId: string;
+    postId: string;
+    post : IPost
+  }

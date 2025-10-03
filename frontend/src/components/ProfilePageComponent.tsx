@@ -24,12 +24,10 @@ export interface ProfileUserTypes {
 
 type TabType = "created" | "saved" | "pending" | "rejected";
 
-export default function ProfilePage({
-  params,
+export default function ProfilePageComponent({
+  username,
 }: {
-  params: Promise<{
-    username: string;
-  }>;
+  username: string;
 }) {
   const [userInfo, setUserInfo] = useState<ProfileUserTypes | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("created");
@@ -69,7 +67,7 @@ export default function ProfilePage({
   };
 
   const handleShare = async () => {
-    const profileUrl = `${window.location.origin}/${params.username}`;
+    const profileUrl = `${window.location.origin}/${username}`;
 
     try {
       await navigator.clipboard.writeText(profileUrl);
@@ -83,7 +81,7 @@ export default function ProfilePage({
     if (!confirm("Are you sure you want to delete this post?")) return;
 
     try {
-      await axios.delete(`${BACKEND_URL}/post/${postId}`, {
+      await axios.delete(`${BACKEND_URL}/posts/${postId}`, {
         headers: {
           Authorization: `Bearer ${session?.accessToken}`,
         },
@@ -132,8 +130,6 @@ export default function ProfilePage({
   }
 
   const isOwnProfile = session?.user.id === userInfo?.id;
-
-  console.log(isOwnProfile);
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4">
@@ -305,16 +301,6 @@ export default function ProfilePage({
                         <XCircle className="h-3 w-3" />
                         Rejected
                       </div>
-                      {post.rejectionReason && (
-                        <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center p-4">
-                          <div className="text-white text-center">
-                            <p className="font-semibold mb-2">
-                              Rejection Reason:
-                            </p>
-                            <p className="text-sm">{post.rejectionReason}</p>
-                          </div>
-                        </div>
-                      )}
                       <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <Button
                           onClick={() => handleDeletePost(post.id)}
