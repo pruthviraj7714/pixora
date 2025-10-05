@@ -12,16 +12,21 @@ import { toast } from "sonner";
 export default function Home() {
   const [posts, setPosts] = useState<IPost[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const { data } = useSession();
+  const { data, status } = useSession();
 
   const fetchPosts = async () => {
     try {
       const res = await axios.get(`${BACKEND_URL}/posts`, {
-        headers : {
-            Authorization : `Bearer ${data?.accessToken}`
-        }
+        headers: {
+          Authorization: `Bearer ${data?.accessToken}`,
+        },
       });
-      setPosts(res.data);
+      const posts = res.data;
+      const formattedPosts = posts.map((post: IPost) => ({
+        ...post,
+        isSaved: post.savedBy.length > 0,
+      }));
+      setPosts(formattedPosts);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to fetch posts");
     } finally {
@@ -29,23 +34,65 @@ export default function Home() {
     }
   };
 
-  const savePost = async (pinId: string) => {
+  const savePost = async (postId: string) => {
     try {
-      const res = await axios.post(`/api/pin/save?pinId=${pinId}`);
-      toast.success(res.data.message, { position: "bottom-center" });
-      setPosts((prev: any) =>
-        prev.map((post: IPost) =>
-          post.id === pinId ? { ...post, isSaved: res.data.isSaved } : post
+      const res = await axios.patch(
+        `${BACKEND_URL}/posts/save/${postId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${data?.accessToken}`,
+          },
+        }
+      );
+      setPosts((prev) =>
+        (prev || []).map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                isSaved: true,
+              }
+            : post
         )
       );
+      toast.success(res.data.message, { position: "bottom-center" });
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    }
+  };
+
+  const unsavePost = async (postId: string) => {
+    try {
+      const res = await axios.patch(
+        `${BACKEND_URL}/posts/unsave/${postId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${data?.accessToken}`,
+          },
+        }
+      );
+      setPosts((prev) =>
+        (prev || []).map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                isSaved: false,
+              }
+            : post
+        )
+      );
+      toast.success(res.data.message, { position: "bottom-center" });
     } catch (error: any) {
       toast.error(error.response.data.message);
     }
   };
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    if (status === "authenticated") {
+      fetchPosts();
+    }
+  }, [status]);
 
   if (loading) {
     return (
@@ -66,7 +113,12 @@ export default function Home() {
         {posts &&
           posts.length > 0 &&
           posts.map((post: IPost) => (
-            <PinBox key={post.id} post={post} onSave={() => savePost(post.id)} />
+            <PinBox
+              key={post.id}
+              post={post}
+              onSave={() => savePost(post.id)}
+              onUnsave={() => unsavePost(post.id)}
+            />
           ))}
       </div>
     </div>

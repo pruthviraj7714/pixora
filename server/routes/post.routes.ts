@@ -42,19 +42,28 @@ postRouter.post("/create", authMiddleware, async (req, res) => {
   }
 });
 
-postRouter.get("/", async (req, res) => {
+postRouter.get("/", authMiddleware, async (req, res) => {
   try {
+    const userId = req.userId!;
     const posts = await prisma.post.findMany({
-      where : {
-        status : "APPROVED"
+      where: {
+        status: "APPROVED",
       },
-      include : {
-        user : {
-          select : {
-            username : true,
-          }
-        }
-      }
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+        savedBy: {
+          where : {
+            userId
+          },
+          select: {
+            id: true,
+          },
+        },
+      },
     });
     res.status(200).json(posts || []);
   } catch (error) {
@@ -64,22 +73,31 @@ postRouter.get("/", async (req, res) => {
   }
 });
 
-postRouter.get("/:id", async (req, res) => {
+postRouter.get("/:id", authMiddleware,  async (req, res) => {
   try {
+    const userId = req.userId;
     const { id } = req.params;
 
     const post = await prisma.post.findUnique({
       where: {
         id,
       },
-      include : {
-        comments : true,
-        user : {
+      include: {
+        comments: true,
+        user: {
+          select: {
+            username: true,
+          },
+        },
+        savedBy : {
+          where : {
+            userId
+          },
           select : {
-            username : true
+            id : true
           }
         }
-      }
+      },
     });
 
     res.status(200).json(post);
@@ -102,6 +120,79 @@ postRouter.delete("/:id", authMiddleware, async (req, res) => {
 
     res.status(200).json({
       message: "Post Successfully Deleted",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
+
+postRouter.patch("/save/:id", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.userId!;
+
+    const postId = req.params.id;
+
+    if (!postId) {
+      res.status(400).json({
+        message: "Post Id is missing",
+      });
+      return;
+    }
+
+    await prisma.savedPost.create({
+      data: {
+        postId,
+        userId,
+      },
+    });
+
+    res.status(200).json({
+      message: "Post Successfully Saved",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
+
+postRouter.patch("/unsave/:id", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.userId!;
+
+    const postId = req.params.id;
+
+    if (!postId) {
+      res.status(400).json({
+        message: "Post Id is missing",
+      });
+      return;
+    }
+
+    const savedPost = await prisma.savedPost.findFirst({
+      where: {
+        postId,
+        userId,
+      },
+    });
+
+    if (!savedPost) {
+      res.status(400).json({
+        message: "Post is not saved!",
+      });
+      return;
+    }
+
+    await prisma.savedPost.delete({
+      where: {
+        id: savedPost.id,
+      },
+    });
+
+    res.status(200).json({
+      message: "Post Successfully Unsaved",
     });
   } catch (error) {
     res.status(500).json({

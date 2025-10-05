@@ -6,9 +6,11 @@ import { IPost } from "@/types/post";
 export default function PinBox({
   post,
   onSave,
+  onUnsave,
 }: {
   post: IPost;
   onSave: (postId: string) => void;
+  onUnsave: (postId: string) => void;
 }) {
   const router = useRouter();
 
@@ -23,16 +25,20 @@ export default function PinBox({
       <div
         onClick={(e) => {
           e.stopPropagation();
-          onSave(post.id);
+          if (post.isSaved) {
+            onUnsave(post.id);
+          } else {
+            onSave(post.id);
+          }
         }}
         className="absolute right-3 top-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-red-500 hover:bg-red-600 shadow-md"
       >
-        {post.image ? (
-          <Button className="bg-black hover:bg-black text-white rounded-2xl">
+        {post.isSaved ? (
+          <Button className="bg-black cursor-pointer hover:bg-black text-white rounded-2xl">
             Saved
           </Button>
         ) : (
-          <Button className="bg-red-500 hover:bg-red-600 text-white rounded-2xl">
+          <Button className="bg-red-500 cursor-pointer hover:bg-red-600 text-white rounded-2xl">
             Save
           </Button>
         )}

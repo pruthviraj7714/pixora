@@ -9,6 +9,10 @@ export interface IPost {
     user : {
       username : string;
     },
+    savedBy : {
+      id : string
+    }[],
+    isSaved? : boolean;
     comments  : IComment[],
     category: string;
     status: "PENDING" | "APPROVED" | "REJECTED";

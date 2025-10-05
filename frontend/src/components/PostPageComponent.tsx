@@ -22,7 +22,6 @@ import { IComment } from "@/types/comment";
 export default function PostPageComponent({ postId }: { postId: string }) {
   const [postInfo, setPostInfo] = useState<IPost | null>(null);
   const [commentText, setCommentText] = useState<string | null>(null);
-  const [isSaved, setIsSaved] = useState<boolean>(false);
   const [copied, setCopied] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -37,7 +36,12 @@ export default function PostPageComponent({ postId }: { postId: string }) {
           Authorization: `Bearer ${data?.accessToken}`,
         },
       });
-      setPostInfo(res.data);
+
+      const info = res.data;
+      setPostInfo({
+        ...info,
+        isSaved: info.savedBy.length > 0 ? true : false,
+      });
     } catch (error: any) {
       toast.error(
         error?.response?.data.message || "Failed to load Post information"
@@ -82,22 +86,46 @@ export default function PostPageComponent({ postId }: { postId: string }) {
       toast.success("comment successfully deleted!");
       setPostInfo({
         ...postInfo,
-        comments: postInfo?.comments.filter((c: IComment) => c.id !== commentId),
+        comments: postInfo?.comments.filter(
+          (c: IComment) => c.id !== commentId
+        ),
       } as IPost);
     } catch (error: any) {
       toast.error(error.response.data.message);
     }
   };
 
-  const savePin = async () => {
+  const savePost = async () => {
     try {
-      const res = await axios.post(`/api/pin/save?pinId=${postId}`, {
-        headers: {
-          Authorization: `Bearer ${data?.accessToken}`,
-        },
-      });
+      const res = await axios.patch(
+        `${BACKEND_URL}/posts/save/${postId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${data?.accessToken}`,
+          },
+        }
+      );
+      setPostInfo((prev) => prev && { ...prev, isSaved: true });
       toast.success(res.data.message, { position: "bottom-center" });
-      setIsSaved(res.data.isSaved);
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    }
+  };
+
+  const unsavePost = async () => {
+    try {
+      const res = await axios.patch(
+        `${BACKEND_URL}/posts/unsave/${postId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${data?.accessToken}`,
+          },
+        }
+      );
+      setPostInfo((prev) => prev && { ...prev, isSaved: false });
+      toast.success(res.data.message, { position: "bottom-center" });
     } catch (error: any) {
       toast.error(error.response.data.message);
     }
@@ -153,8 +181,10 @@ export default function PostPageComponent({ postId }: { postId: string }) {
   };
 
   useEffect(() => {
-    getPostInfo();
-  }, [postId]);
+    if(status === "authenticated") {
+      getPostInfo();
+    }
+  }, [postId, status]);
 
   if (loading || status == "loading" || !postInfo) {
     return <PinPageSkeleton />;
@@ -209,13 +239,21 @@ export default function PostPageComponent({ postId }: { postId: string }) {
                 </Button>
               </div>
 
-              <div onClick={savePin}>
-                {!isSaved ? (
-                  <Button className="bg-red-500 hover:bg-red-600 text-white rounded-xl">
+              <div
+                onClick={() => {
+                  if (postInfo.isSaved) {
+                    unsavePost();
+                  } else {
+                    savePost();
+                  }
+                }}
+              >
+                {!postInfo.isSaved ? (
+                  <Button className="bg-red-500 cursor-pointer hover:bg-red-600 text-white rounded-xl">
                     Save
                   </Button>
                 ) : (
-                  <Button className="bg-black hover:bg-black text-white rounded-xl">
+                  <Button className="bg-black cursor-pointer hover:bg-black text-white rounded-xl">
                     Saved
                   </Button>
                 )}
@@ -262,7 +300,9 @@ export default function PostPageComponent({ postId }: { postId: string }) {
               <h2 className="text-2xl font-bold text-gray-800 mt-4 mb-4">
                 {postInfo.comments.length ?? 0} Comments
               </h2>
-              {postInfo && postInfo.comments && postInfo.comments?.length > 0 ? (
+              {postInfo &&
+              postInfo.comments &&
+              postInfo.comments?.length > 0 ? (
                 postInfo.comments.map((comment: IComment) => (
                   <CommentBox
                     onDelete={() => deleteComment(comment.id)}
