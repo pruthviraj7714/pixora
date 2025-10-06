@@ -23,6 +23,7 @@ model User {
   password      String         @unique
   role          Role           @default(USER)
   posts         Post[]
+  likes         Like[]
   createdAt     DateTime       @default(now())
   savedPosts    SavedPost[]
   comments      Comment[]
@@ -37,12 +38,23 @@ model Post {
   image       String
   category    String
   status      PostStatus  @default(PENDING)
-  likes       Int
+  likedBy     Like[]
   comments    Comment[]
   createdAt   DateTime    @default(now())
   savedBy     SavedPost[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Like {
+  id      String   @id @default(uuid())
+  postId  String
+  userId  String
+  likedAt DateTime @default(now())
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
 }
 
 model Comment {

@@ -6,23 +6,21 @@ const adminRouter = Router();
 
 adminRouter.get("/", adminMiddleware, async (req, res) => {
   try {
-    const [totalUsers, totalPosts, totalComments, approvedPosts] =
+    const [totalUsers, totalPosts, totalComments, approvedPosts, totalLikes] =
       await Promise.all([
         prisma.user.count(),
         prisma.post.count(),
         prisma.comment.count(),
         prisma.post.count({ where: { status: "APPROVED" } }),
+        prisma.like.count(),
       ]);
-
-    const totalLikes = await prisma.post.aggregate({
-      _sum: { likes: true },
-    });
 
     const recentPosts = await prisma.post.findMany({
       take: 10,
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { username: true, email: true } },
+        _count: { select: { likedBy: true, comments: true } },
       },
     });
 
@@ -33,7 +31,7 @@ adminRouter.get("/", adminMiddleware, async (req, res) => {
         totalComments,
         approvedPosts,
         pendingPosts: totalPosts - approvedPosts,
-        totalLikes: totalLikes._sum.likes || 0,
+        totalLikes,
       },
       recentPosts,
     });
@@ -94,9 +92,7 @@ adminRouter.get("/media", adminMiddleware, async (req, res) => {
       where: { status: "PENDING" },
     });
 
-    const totalLikes = await prisma.post.aggregate({
-      _sum: { likes: true },
-    });
+    const totalLikes = await prisma.like.count();
 
     const totalComments = await prisma.comment.count();
 
@@ -107,9 +103,14 @@ adminRouter.get("/media", adminMiddleware, async (req, res) => {
 
     const topPosts = await prisma.post.findMany({
       take: 10,
-      orderBy: { likes: "desc" },
+      orderBy: {
+        likedBy: {
+          _count: "desc",
+        },
+      },
       include: {
         user: { select: { username: true } },
+        _count: { select: { likedBy: true } },
       },
     });
 
@@ -128,7 +129,7 @@ adminRouter.get("/media", adminMiddleware, async (req, res) => {
       totalPosts,
       approvedPosts,
       pendingPosts,
-      totalLikes: totalLikes._sum.likes || 0,
+      totalLikes,
       totalComments,
       postsByCategory,
       topPosts,
@@ -263,8 +264,8 @@ adminRouter.put("/posts/:id/approve", adminMiddleware, async (req, res) => {
         postId: post.id,
         type: "MEDIA_APPROVED",
         userId: post.userId,
-        mediaTitle : post.title,
-        mediaUrl : post.image,
+        mediaTitle: post.title,
+        mediaUrl: post.image,
       },
     });
 
@@ -293,8 +294,8 @@ adminRouter.put("/posts/:id/reject", adminMiddleware, async (req, res) => {
         type: "MEDIA_REJECTED",
         userId: post.userId,
         message,
-        mediaTitle : post.title,
-        mediaUrl : post.image,
+        mediaTitle: post.title,
+        mediaUrl: post.image,
       },
     });
 

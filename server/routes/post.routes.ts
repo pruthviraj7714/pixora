@@ -28,7 +28,6 @@ postRouter.post("/create", authMiddleware, async (req, res) => {
         image,
         category,
         userId,
-        likes: 0,
       },
     });
 
@@ -56,8 +55,8 @@ postRouter.get("/", authMiddleware, async (req, res) => {
           },
         },
         savedBy: {
-          where : {
-            userId
+          where: {
+            userId,
           },
           select: {
             id: true,
@@ -73,7 +72,7 @@ postRouter.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-postRouter.get("/:id", authMiddleware,  async (req, res) => {
+postRouter.get("/:id", authMiddleware, async (req, res) => {
   try {
     const userId = req.userId;
     const { id } = req.params;
@@ -83,20 +82,43 @@ postRouter.get("/:id", authMiddleware,  async (req, res) => {
         id,
       },
       include: {
-        comments: true,
+        comments: {
+          include : {
+            user : {
+              select : {
+                firstname : true,
+                lastname : true,
+                username : true
+              }
+            }
+          }
+        },
         user: {
           select: {
             username: true,
           },
         },
-        savedBy : {
-          where : {
-            userId
+        savedBy: {
+          where: {
+            userId,
           },
-          select : {
-            id : true
-          }
-        }
+          select: {
+            id: true,
+          },
+        },
+        likedBy: {
+          where: {
+            userId,
+          },
+          select: {
+            id: true,
+          },
+        },
+        _count: {
+          select: {
+            likedBy: true,
+          },
+        },
       },
     });
 
@@ -193,6 +215,54 @@ postRouter.patch("/unsave/:id", authMiddleware, async (req, res) => {
 
     res.status(200).json({
       message: "Post Successfully Unsaved",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
+
+postRouter.patch("/toggle-like/:id", authMiddleware, async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const userId = req.userId!;
+
+    if (!postId) {
+      res.status(400).json({
+        message: "Post Id is missing",
+      });
+      return;
+    }
+
+    const isLiked = await prisma.like.findFirst({
+      where: {
+        userId,
+        postId,
+      },
+    });
+
+    if (isLiked) {
+      await prisma.like.delete({
+        where: {
+          id: isLiked.id,
+        },
+      });
+      res.status(200).json({
+        likeStatus: false,
+      });
+      return;
+    }
+
+    await prisma.like.create({
+      data: {
+        postId,
+        userId,
+      },
+    });
+
+    res.status(200).json({
+      likeStatus: true,
     });
   } catch (error) {
     res.status(500).json({

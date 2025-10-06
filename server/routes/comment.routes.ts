@@ -44,6 +44,15 @@ commentRouter.post("/post/:postId", authMiddleware, async (req, res) => {
         userId,
         postId,
       },
+      include : {
+        user : {
+          select : {
+            username : true,
+            firstname : true,
+            lastname : true
+          }
+        }
+      }
     });
 
     res.status(200).json({
