@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, CheckCircle2, XCircle, Bell, BellOff, Image, User } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Bell,
+  BellOff,
+  Image,
+  User,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import { BACKEND_URL } from "@/lib/config";
@@ -78,7 +86,9 @@ export default function NotificationsPage() {
       {notifications.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20">
           <BellOff className="w-16 h-16 text-gray-300 mb-4" />
-          <p className="text-xl font-medium text-gray-500">No notifications yet</p>
+          <p className="text-xl font-medium text-gray-500">
+            No notifications yet
+          </p>
           <p className="text-sm text-gray-400 mt-2">
             You'll see updates about your media submissions here
           </p>
@@ -128,7 +138,7 @@ export default function NotificationsPage() {
                     </div>
 
                     <p className="text-sm text-gray-700 mb-3">
-                      {notif.message || 
+                      {notif.message ||
                         (notif.type === "MEDIA_APPROVED"
                           ? "Your media has been approved and is now visible to everyone."
                           : "Your media submission did not meet our guidelines.")}
@@ -165,7 +175,7 @@ export default function NotificationsPage() {
                           minute: "2-digit",
                         })}
                       </span>
-                      {notif.postId && (
+                      {notif.postId && notif.type !== "MEDIA_REJECTED" && (
                         <>
                           <span>•</span>
                           <a

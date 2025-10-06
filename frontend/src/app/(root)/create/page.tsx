@@ -80,7 +80,9 @@ export default function CreatePost() {
           Authorization : `Bearer ${data?.accessToken}`
         }
       });
-      toast.success("Post successfully Added");
+      toast.success("Post Created Successfully", {
+        description: "Your post has been submitted and is awaiting admin approval.",
+      });
       router.push("/home");
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to Post the media");

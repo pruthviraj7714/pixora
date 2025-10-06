@@ -29,13 +29,13 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<IPost | null>(null);
   const [rejectMessage, setRejectMessage] = useState("");
-  const { data } = useSession();
+  const { data, status } = useSession();
 
   useEffect(() => {
-    if (data?.accessToken) {
+    if (status === "authenticated") {
       fetchData();
     }
-  }, [activeTab, data?.accessToken]);
+  }, [activeTab, status]);
 
   const axiosAuth = axios.create({
     baseURL: BACKEND_URL,
@@ -69,7 +69,7 @@ export default function AdminDashboard() {
           const { data: media } = await axiosAuth.get("/admin/media");
           setMediaData(media);
 
-          const { data: posts } = await axiosAuth.get("/admin/posts");
+          const { data: posts } = await axiosAuth.get("/admin/media/list");
           setAllPosts(posts.posts || []);
           break;
         }
@@ -505,7 +505,7 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === "approvals" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
             {pendingPosts.length === 0 ? (
               <div className="col-span-full text-center py-12 text-gray-500">
                 No pending approvals
@@ -520,7 +520,7 @@ export default function AdminDashboard() {
                     <img
                       src={post.image}
                       alt={post.title}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-auto object-contain"
                     />
                   )}
                   <div className="p-4">

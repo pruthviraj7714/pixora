@@ -12,11 +12,15 @@ export interface IPost {
     savedBy : {
       id : string
     }[],
+    likedBy : {
+      id : string
+    }[],
+    likes : number;
     isSaved? : boolean;
+    isLiked? : boolean;
     comments  : IComment[],
     category: string;
     status: "PENDING" | "APPROVED" | "REJECTED";
-    likes: number;
     createdAt: Date;
   }
 

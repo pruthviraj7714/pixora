@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Share2Icon, MoreHorizontalIcon, SendIcon, Check } from "lucide-react";
+import {
+  Share2Icon,
+  MoreHorizontalIcon,
+  SendIcon,
+  Check,
+  Heart,
+} from "lucide-react";
 import CommentBox from "./CommentBox";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -38,9 +44,13 @@ export default function PostPageComponent({ postId }: { postId: string }) {
       });
 
       const info = res.data;
+      console.log(info);
+
       setPostInfo({
         ...info,
         isSaved: info.savedBy.length > 0 ? true : false,
+        isLiked: info.likedBy.length > 0 ? true : false,
+        likes: info._count.likedBy,
       });
     } catch (error: any) {
       toast.error(
@@ -180,8 +190,35 @@ export default function PostPageComponent({ postId }: { postId: string }) {
     }
   };
 
+  const handleLikePost = async () => {
+    try {
+      const res = await axios.patch(
+        `${BACKEND_URL}/posts/toggle-like/${postId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${data?.accessToken}`,
+          },
+        }
+      );
+
+      const likeStatus = res.data.likeStatus;
+
+      setPostInfo(
+        (prev) =>
+          prev && {
+            ...prev,
+            likes: likeStatus ? prev.likes + 1 : prev.likes - 1,
+            isLiked: likeStatus,
+          }
+      );
+    } catch (error: any) {
+      toast.error(error.response.data.message || error.message);
+    }
+  };
+
   useEffect(() => {
-    if(status === "authenticated") {
+    if (status === "authenticated") {
       getPostInfo();
     }
   }, [postId, status]);
@@ -237,6 +274,16 @@ export default function PostPageComponent({ postId }: { postId: string }) {
                     <Share2Icon className="h-6 w-6 text-gray-600" />
                   )}
                 </Button>
+                <div className="flex gap-1.5 items-center">
+                  <div onClick={handleLikePost}>
+                    {postInfo.isLiked ? (
+                      <Heart className="fill-pink-500 border border-black cursor-pointer" />
+                    ) : (
+                      <Heart className="border-black cursor-pointer" />
+                    )}
+                  </div>
+                  <span className="font-bold">{postInfo.likes}</span>
+                </div>
               </div>
 
               <div
