@@ -41,7 +41,7 @@ postRouter.post("/create", authMiddleware, async (req, res) => {
   }
 });
 
-postRouter.get("/", authMiddleware, async (req, res) => {
+postRouter.get("/all", authMiddleware, async (req, res) => {
   try {
     const userId = req.userId!;
     const posts = await prisma.post.findMany({
@@ -72,7 +72,7 @@ postRouter.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-postRouter.get("/:id", authMiddleware, async (req, res) => {
+postRouter.get("/post/:id", authMiddleware, async (req, res) => {
   try {
     const userId = req.userId;
     const { id } = req.params;
@@ -83,15 +83,15 @@ postRouter.get("/:id", authMiddleware, async (req, res) => {
       },
       include: {
         comments: {
-          include : {
-            user : {
-              select : {
-                firstname : true,
-                lastname : true,
-                username : true
-              }
-            }
-          }
+          include: {
+            user: {
+              select: {
+                firstname: true,
+                lastname: true,
+                username: true,
+              },
+            },
+          },
         },
         user: {
           select: {
@@ -130,7 +130,7 @@ postRouter.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-postRouter.delete("/:id", authMiddleware, async (req, res) => {
+postRouter.delete("/post/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -264,6 +264,24 @@ postRouter.patch("/toggle-like/:id", authMiddleware, async (req, res) => {
     res.status(200).json({
       likeStatus: true,
     });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
+
+postRouter.get("/similar-images", authMiddleware, async (req, res) => {
+  try {
+    const category = req.query.category as string;
+
+    const posts = await prisma.post.findMany({
+      where: {
+        category,
+      },
+    });
+
+    res.status(200).json(posts);
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",

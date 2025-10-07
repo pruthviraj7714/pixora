@@ -2,7 +2,7 @@ import { Router } from "express";
 import { ProfileUpdateSchema, SigninSchema, SignupSchema } from "../zod/schema";
 import { hash, compare } from "bcrypt";
 import prisma from "../db";
-import { ADMIN_JWT_SECRET, FRONTEND_URL, USER_JWT_SECRET } from "../config";
+import { ADMIN_JWT_SECRET, USER_JWT_SECRET } from "../config";
 import jwt from "jsonwebtoken";
 import authMiddleware from "../middlewares/user.middleware";
 
@@ -112,8 +112,8 @@ userRouter.post("/signin", async (req, res) => {
       message: "User Successfully Logged In!",
       id: user.id,
       token,
-      role : user.role,
-      username : user.username
+      role: user.role,
+      username: user.username,
     });
   } catch (error) {
     res.status(500).json({
@@ -132,11 +132,11 @@ userRouter.get("/me", authMiddleware, async (req, res) => {
       },
       include: {
         posts: true,
-        savedPosts : {
-          include : {
-            post : true
-          }
-        }
+        savedPosts: {
+          include: {
+            post: true,
+          },
+        },
       },
     });
 
@@ -204,6 +204,37 @@ userRouter.delete("/me", authMiddleware, async (req, res) => {
     res.status(200).json({
       message: "User Account Successfully Deleted",
     });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
+
+userRouter.get("/saved", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.userId!;
+
+    const savedPosts = await prisma.savedPost.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        post: {
+          include: {
+            user: {
+              select: {
+                firstname: true,
+                lastname: true,
+                username: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.status(200).json(savedPosts);
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",
