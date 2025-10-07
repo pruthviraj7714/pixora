@@ -16,7 +16,7 @@ export default function Home() {
 
   const fetchPosts = async () => {
     try {
-      const res = await axios.get(`${BACKEND_URL}/posts`, {
+      const res = await axios.get(`${BACKEND_URL}/posts/all`, {
         headers: {
           Authorization: `Bearer ${data?.accessToken}`,
         },

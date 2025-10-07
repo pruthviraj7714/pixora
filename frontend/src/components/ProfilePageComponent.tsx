@@ -3,7 +3,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import PinBox3 from "@/components/PinBox3";
+import PinBox2 from "@/components/PinBox2";
 import Link from "next/link";
 import { Bookmark, Share2, XCircle, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -81,7 +81,7 @@ export default function ProfilePageComponent({
     if (!confirm("Are you sure you want to delete this post?")) return;
 
     try {
-      await axios.delete(`${BACKEND_URL}/posts/${postId}`, {
+      await axios.delete(`${BACKEND_URL}/posts/post/${postId}`, {
         headers: {
           Authorization: `Bearer ${session?.accessToken}`,
         },
@@ -217,7 +217,7 @@ export default function ProfilePageComponent({
             createdPosts && createdPosts.length > 0 ? (
               <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 space-y-4 min-h-screen p-6">
                 {createdPosts.map((post: IPost) => (
-                  <PinBox3 post={post} key={post.id} />
+                  <PinBox2 post={post} key={post.id} />
                 ))}
               </div>
             ) : (
@@ -246,7 +246,7 @@ export default function ProfilePageComponent({
               {savedPosts && savedPosts.length > 0 ? (
                 <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 space-y-4 min-h-screen p-6">
                   {savedPosts.map((savedPost: ISavedPost) => (
-                    <PinBox3 post={savedPost.post} key={savedPost.id} />
+                    <PinBox2 post={savedPost.post} key={savedPost.id} />
                   ))}
                 </div>
               ) : (
@@ -268,7 +268,7 @@ export default function ProfilePageComponent({
                 <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 space-y-4 min-h-screen p-6">
                   {pendingPosts.map((post: IPost) => (
                     <div key={post.id} className="relative">
-                      <PinBox3 post={post} noRedirect />
+                      <PinBox2 post={post} noRedirect />
                       <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
                         Pending Review
                       </div>
@@ -296,7 +296,7 @@ export default function ProfilePageComponent({
                 <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 space-y-4 min-h-screen p-6">
                   {rejectedPosts.map((post: IPost) => (
                     <div key={post.id} className="relative group">
-                      <PinBox3 post={post} noRedirect />
+                      <PinBox2 post={post} noRedirect />
                       <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold flex items-center gap-1">
                         <XCircle className="h-3 w-3" />
                         Rejected

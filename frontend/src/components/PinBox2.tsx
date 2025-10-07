@@ -1,7 +1,7 @@
 import { IPost } from "@/types/post";
 import Link from "next/link";
 
-export default function PinBox3({ post, noRedirect }: { post: IPost, noRedirect?: boolean }) {
+export default function PinBox2({ post, noRedirect }: { post: IPost, noRedirect?: boolean }) {
   const content = (
     <>
       <div className="aspect-w-1 aspect-h-1">

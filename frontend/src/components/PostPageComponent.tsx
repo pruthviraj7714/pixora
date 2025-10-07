@@ -5,9 +5,9 @@ import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
-  Share2Icon,
-  MoreHorizontalIcon,
-  SendIcon,
+  Share2,
+  MoreHorizontal,
+  Send,
   Check,
   Heart,
 } from "lucide-react";
@@ -30,6 +30,8 @@ export default function PostPageComponent({ postId }: { postId: string }) {
   const [commentText, setCommentText] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const { data: session, status } = useSession();
+  const [category, setCategory] = useState(null);
+  const [similarPosts, setSimilarPosts] = useState<IPost[]>([]);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const { data } = useSession();
@@ -37,14 +39,13 @@ export default function PostPageComponent({ postId }: { postId: string }) {
   const getPostInfo = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${BACKEND_URL}/posts/${postId}`, {
+      const res = await axios.get(`${BACKEND_URL}/posts/post/${postId}`, {
         headers: {
           Authorization: `Bearer ${data?.accessToken}`,
         },
       });
 
       const info = res.data;
-      console.log(info);
 
       setPostInfo({
         ...info,
@@ -52,6 +53,7 @@ export default function PostPageComponent({ postId }: { postId: string }) {
         isLiked: info.likedBy.length > 0 ? true : false,
         likes: info._count.likedBy,
       });
+      setCategory(info.category)
     } catch (error: any) {
       toast.error(
         error?.response?.data.message || "Failed to load Post information"
@@ -141,9 +143,9 @@ export default function PostPageComponent({ postId }: { postId: string }) {
     }
   };
 
-  const deletePost = async (postId: string) => {
+  const deletePost = async () => {
     try {
-      const res = await axios.delete(`/api/pin/delete?postId=${postId}`, {
+      const res = await axios.delete(`${BACKEND_URL}/post/${postId}`, {
         headers: {
           Authorization: `Bearer ${data?.accessToken}`,
         },
@@ -159,7 +161,7 @@ export default function PostPageComponent({ postId }: { postId: string }) {
     const shareData = {
       title: postInfo?.title || "Check out this post",
       text: postInfo?.description || "Interesting post to share",
-      url: `${window.location.origin}/pin/${postId}`,
+      url: `${window.location.origin}/post/${postId}`,
     };
 
     if (navigator.share) {
@@ -180,7 +182,7 @@ export default function PostPageComponent({ postId }: { postId: string }) {
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(
-        `${window.location.origin}/pin/${postId}`
+        `${window.location.origin}/post/${postId}`
       );
       setCopied(true);
       toast.success("Link copied to clipboard!");
@@ -217,11 +219,30 @@ export default function PostPageComponent({ postId }: { postId: string }) {
     }
   };
 
+  const fetchSimilarImagesForGivenCategory = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_URL}/posts/similar-images?category=${category}`, {
+        headers : {
+          Authorization : `Bearer ${data?.accessToken}`
+        }
+      });
+      setSimilarPosts(res.data);
+    } catch (error : any) {
+      toast.error(error.response.data.message || error.message)
+    }
+  }
+
   useEffect(() => {
     if (status === "authenticated") {
       getPostInfo();
     }
   }, [postId, status]);
+
+  useEffect(() => {
+    if (category && status === "authenticated") {
+      fetchSimilarImagesForGivenCategory();
+    }
+  }, [category, status]);
 
   if (loading || status == "loading" || !postInfo) {
     return <PinPageSkeleton />;
@@ -229,7 +250,7 @@ export default function PostPageComponent({ postId }: { postId: string }) {
 
   return (
     <div className="min-h-screen p-6 bg-gray-100">
-      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
         <div className="flex flex-col md:flex-row">
           <div className="h-[600px] md:w-1/2 bg-transparent">
             <img
@@ -249,12 +270,12 @@ export default function PostPageComponent({ postId }: { postId: string }) {
                         variant="ghost"
                         className="hover:bg-gray-100 rounded-full transition-all"
                       >
-                        <MoreHorizontalIcon className="h-6 w-6 text-gray-600" />
+                        <MoreHorizontal className="h-6 w-6 text-gray-600" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="bg-gray-200 hover:bg-gray-300 ">
                       <DropdownMenuItem
-                        onClick={() => deletePost(postId)}
+                        onClick={deletePost}
                         className="cursor-pointer"
                       >
                         <div className="hover:text-red-500">Delete</div>
@@ -271,7 +292,7 @@ export default function PostPageComponent({ postId }: { postId: string }) {
                   {copied ? (
                     <Check className="h-6 w-6 text-green-600" />
                   ) : (
-                    <Share2Icon className="h-6 w-6 text-gray-600" />
+                    <Share2 className="h-6 w-6 text-gray-600" />
                   )}
                 </Button>
                 <div className="flex gap-1.5 items-center">
@@ -341,7 +362,7 @@ export default function PostPageComponent({ postId }: { postId: string }) {
                   onClick={addComment}
                   className="p-2 bg-pink-500 rounded-full text-white hover:bg-pink-600 transition-all focus:outline-none focus:ring-2 focus:ring-pink-400"
                 >
-                  <SendIcon className="w-5 h-5" />
+                  <Send className="w-5 h-5" />
                 </button>
               </div>
               <h2 className="text-2xl font-bold text-gray-800 mt-4 mb-4">
@@ -371,6 +392,43 @@ export default function PostPageComponent({ postId }: { postId: string }) {
           </div>
         </div>
       </div>
+
+      {similarPosts && similarPosts.length > 0 && (
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">
+            More like this
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {similarPosts.map((post) => (
+              <div
+                key={post.id}
+                onClick={() => router.push(`/post/${post.id}`)}
+                className="group cursor-pointer relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300"
+              >
+                <div className="aspect-[3/4] relative">
+                  <img
+                    src={post.image || "/placeholder.svg"}
+                    alt={post.title || "Similar post"}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h3 className="text-white font-semibold text-sm line-clamp-2">
+                        {post.title || "Untitled"}
+                      </h3>
+                      {post.user?.username && (
+                        <p className="text-white/80 text-xs mt-1">
+                          by {post.user.username}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

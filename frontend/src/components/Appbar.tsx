@@ -121,7 +121,7 @@ export default function Appbar() {
                 onClick={() => router.push("/saved-posts")}
                 className="cursor-pointer text-md hover:bg-pink-100"
               >
-                Saved Pins
+                Saved Posts
               </DropdownMenuItem>
 
               <AlertDialog>
