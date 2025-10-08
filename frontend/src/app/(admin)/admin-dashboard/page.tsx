@@ -507,9 +507,9 @@ export default function AdminDashboard() {
         {activeTab === "approvals" && (
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
             {pendingPosts.length === 0 ? (
-              <div className="col-span-full text-center py-12 text-gray-500">
-                No pending approvals
-              </div>
+              <div className="flex items-center justify-center min-h-[50vh] text-gray-500 text-lg">
+              No pending approvals
+            </div>
             ) : (
               pendingPosts.map((post) => (
                 <div
