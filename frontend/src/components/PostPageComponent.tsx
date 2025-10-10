@@ -226,7 +226,8 @@ export default function PostPageComponent({ postId }: { postId: string }) {
           Authorization : `Bearer ${data?.accessToken}`
         }
       });
-      setSimilarPosts(res.data);
+      const posts = res.data.filter((post : IPost) => post.id !== postId);
+      setSimilarPosts(posts);
     } catch (error : any) {
       toast.error(error.response.data.message || error.message)
     }

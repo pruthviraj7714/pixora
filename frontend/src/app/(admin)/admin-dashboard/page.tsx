@@ -17,14 +17,15 @@ import { BACKEND_URL } from "@/lib/config";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { IPost } from "@/types/post";
+import { IAdminDashboardData, IAdminMedia, IUser, IUsersData } from "@/types/admin";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
-  const [dashboardData, setDashboardData] = useState(null);
-  const [usersData, setUsersData] = useState(null);
-  const [mediaData, setMediaData] = useState(null);
+  const [dashboardData, setDashboardData] = useState<IAdminDashboardData | null>(null);  
+  const [usersData, setUsersData] = useState<IUsersData | null>(null);
+  const [mediaData, setMediaData] = useState<IAdminMedia | null>(null);
   const [pendingPosts, setPendingPosts] = useState<IPost[]>([]);
-  const [allUsers, setAllUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState<IUser[]>([]);
   const [allPosts, setAllPosts] = useState<IPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<IPost | null>(null);
@@ -238,6 +239,9 @@ export default function AdminDashboard() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Image
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                         Title
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -257,7 +261,20 @@ export default function AdminDashboard() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {dashboardData.recentPosts.map((post) => (
                       <tr key={post.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {post.image ? (
+                            <img
+                              src={post.image}
+                              alt={post.title}
+                              className="w-16 h-16 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                              <FileText className="w-6 h-6 text-gray-400" />
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
                           {post.title}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -346,9 +363,9 @@ export default function AdminDashboard() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                         Joined
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                         Actions
-                      </th>
+                      </th> */}
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -377,14 +394,14 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <button
                             onClick={() => handleDeleteUser(user.id)}
                             className="text-red-600 hover:text-red-900"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-                        </td>
+                        </td> */}
                       </tr>
                     ))}
                   </tbody>
