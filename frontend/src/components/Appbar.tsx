@@ -148,6 +148,7 @@ export default function Appbar() {
                         await signOut({ redirect: false });
                         router.push("/");
                       }}
+                      className="bg-red-500 hover:bg-red-600 cursor-pointer"
                     >
                       Continue
                     </AlertDialogAction>

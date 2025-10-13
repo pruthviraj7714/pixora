@@ -23,7 +23,7 @@ export default function LogInForm() {
       const result = await signIn("credentials", {
         username,
         password,
-        callbackUrl : "/home"
+        callbackUrl : "/auth-verification"
       });
 
       if (result?.error) {

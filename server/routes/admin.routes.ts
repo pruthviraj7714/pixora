@@ -235,7 +235,7 @@ adminRouter.get("/media/list", adminMiddleware, async (req, res) => {
       include: {
         user: { select: { id: true, username: true, email: true } },
         _count: {
-          select: { comments: true, savedBy: true },
+          select: { comments: true, savedBy: true, likedBy : true },
         },
       },
       orderBy: { createdAt: "desc" },

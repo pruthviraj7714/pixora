@@ -16,6 +16,10 @@ export interface IPost {
       id : string
     }[],
     likes : number;
+    _count : {
+      likedBy : number,
+      comments : number
+    }
     isSaved? : boolean;
     isLiked? : boolean;
     comments  : IComment[],

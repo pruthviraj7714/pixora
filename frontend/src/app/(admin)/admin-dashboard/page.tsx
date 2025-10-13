@@ -15,13 +15,20 @@ import {
 } from "lucide-react";
 import { BACKEND_URL } from "@/lib/config";
 import axios from "axios";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { IPost } from "@/types/post";
-import { IAdminDashboardData, IAdminMedia, IUser, IUsersData } from "@/types/admin";
+import {
+  IAdminDashboardData,
+  IAdminMedia,
+  IUser,
+  IUsersData,
+} from "@/types/admin";
+import { Button } from "@/components/ui/button";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
-  const [dashboardData, setDashboardData] = useState<IAdminDashboardData | null>(null);  
+  const [dashboardData, setDashboardData] =
+    useState<IAdminDashboardData | null>(null);
   const [usersData, setUsersData] = useState<IUsersData | null>(null);
   const [mediaData, setMediaData] = useState<IAdminMedia | null>(null);
   const [pendingPosts, setPendingPosts] = useState<IPost[]>([]);
@@ -30,6 +37,10 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<IPost | null>(null);
   const [rejectMessage, setRejectMessage] = useState("");
+  const [imageModal, setImageModal] = useState<{
+    url: string;
+    title: string;
+  } | null>(null);
   const { data, status } = useSession();
 
   useEffect(() => {
@@ -112,17 +123,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      try {
-        await axiosAuth.delete(`/admin/users/${userId}`);
-        fetchData();
-      } catch (error) {
-        console.error("Error deleting user:", error);
-      }
-    }
-  };
-
   const handleDeletePost = async (postId: string) => {
     if (confirm("Are you sure you want to delete this post?")) {
       try {
@@ -177,6 +177,13 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-bold text-gray-900">
               Admin Dashboard
             </h1>
+            <Button
+              className="cursor-pointer"
+              variant={"destructive"}
+              onClick={async () => await signOut({ callbackUrl: "/" })}
+            >
+              Sign out
+            </Button>
           </div>
         </div>
       </div>
@@ -266,7 +273,13 @@ export default function AdminDashboard() {
                             <img
                               src={post.image}
                               alt={post.title}
-                              className="w-16 h-16 object-cover rounded"
+                              className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                              onClick={() =>
+                                setImageModal({
+                                  url: post.image,
+                                  title: post.title,
+                                })
+                              }
                             />
                           ) : (
                             <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
@@ -294,7 +307,7 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {post.likes}
+                          {post._count.likedBy}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(post.createdAt).toLocaleDateString()}
@@ -394,14 +407,6 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </td>
-                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td> */}
                       </tr>
                     ))}
                   </tbody>
@@ -457,6 +462,9 @@ export default function AdminDashboard() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Image
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                         Title
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -479,6 +487,26 @@ export default function AdminDashboard() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {allPosts.map((post) => (
                       <tr key={post.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {post.image ? (
+                            <img
+                              src={post.image}
+                              alt={post.title}
+                              className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                              onClick={() =>
+                                setImageModal({
+                                  url: post.image,
+                                  title: post.title,
+                                })
+                              }
+                            />
+                          ) : (
+                            <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                              <FileText className="w-6 h-6 text-gray-400" />
+                            </div>
+                          )}
+                        </td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {post.title}
                         </td>
@@ -502,7 +530,7 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {post.likes}
+                          {post._count.likedBy}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <button
@@ -525,8 +553,8 @@ export default function AdminDashboard() {
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
             {pendingPosts.length === 0 ? (
               <div className="flex items-center justify-center min-h-[50vh] text-gray-500 text-lg">
-              No pending approvals
-            </div>
+                No pending approvals
+              </div>
             ) : (
               pendingPosts.map((post) => (
                 <div
@@ -607,6 +635,32 @@ export default function AdminDashboard() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {imageModal && (
+        <div
+          className="fixed inset-0 backdrop-blur-sm bg-transparent bg-opacity-30 flex items-center justify-center z-50"
+          onClick={() => setImageModal(null)}
+        >
+          <div
+            className="relative bg-white bg-opacity-90 backdrop-blur-md rounded-lg p-4 max-w-[75vw] max-h-[75vh] mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setImageModal(null)}
+              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 z-10 bg-white rounded-full p-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img
+              src={imageModal.url}
+              alt={imageModal.title}
+              className="max-w-full max-h-[calc(75vh-6rem)] w-auto h-auto object-contain rounded-lg"
+            />
+            <p className="text-center text-gray-700 mt-3 font-medium">
+              {imageModal.title}
+            </p>
           </div>
         </div>
       )}
