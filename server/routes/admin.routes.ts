@@ -1,6 +1,7 @@
 import { Router } from "express";
 import prisma from "../db";
 import adminMiddleware from "../middlewares/admin.middleware";
+import { startOfYear, endOfYear } from "date-fns";
 
 const adminRouter = Router();
 
@@ -315,5 +316,77 @@ adminRouter.delete("/:id", adminMiddleware, async (req, res) => {
     res.status(500).json({ error: "Failed to delete media" });
   }
 });
+
+adminRouter.get("/monthly-overview", adminMiddleware, async (req, res) => {
+  try {
+    const now = new Date();
+    const start = startOfYear(now);
+    const end = endOfYear(now);
+
+    const users = await prisma.user.groupBy({
+      by: ["createdAt"],
+      _count: { _all: true },
+      where: {
+        createdAt: { gte: start, lte: end },
+      },
+    });
+
+    const posts = await prisma.post.groupBy({
+      by: ["createdAt"],
+      _count: { _all: true },
+      where: {
+        createdAt: { gte: start, lte: end },
+      },
+    });
+
+    const approvedPosts = await prisma.post.groupBy({
+      by: ["createdAt"],
+      _count: { _all: true },
+      where: {
+        status: "APPROVED",
+        createdAt: { gte: start, lte: end },
+      },
+    });
+
+    const likes = await prisma.like.groupBy({
+      by: ["likedAt"],
+      _count: { _all: true },
+      where: {
+        likedAt: { gte: start, lte: end },
+      },
+    });
+
+    const comments = await prisma.comment.groupBy({
+      by: ["createdAt"],
+      _count: { _all: true },
+      where: {
+        createdAt: { gte: start, lte: end },
+      },
+    });
+
+    const formatToMonth = (data: any[]) => {
+      const result = Array(12).fill(0);
+      data.forEach((d) => {
+        const month = new Date(d.createdAt || d.likedAt).getMonth(); 
+        result[month] += d._count._all;
+      });
+      return result;
+    };
+
+    const response = {
+      users: formatToMonth(users),
+      posts: formatToMonth(posts),
+      approvedPosts: formatToMonth(approvedPosts),
+      likes: formatToMonth(likes),
+      comments: formatToMonth(comments),
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    res.status(500).json({
+      message : "Internal Server Error"
+    })
+  }
+})
 
 export default adminRouter;
