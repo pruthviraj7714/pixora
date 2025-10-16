@@ -28,3 +28,8 @@ export const PostCreateSchema = z.object({
   image: z.string(),
   category: z.string(),
 });
+
+export const ReportSchema = z.object({
+  reason : z.string(),
+  postId : z.string()
+})

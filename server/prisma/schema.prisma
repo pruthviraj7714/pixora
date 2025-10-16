@@ -28,6 +28,7 @@ model User {
   savedPosts    SavedPost[]
   comments      Comment[]
   notifications Notification[]
+  reports        Report[]
 }
 
 model Post {
@@ -42,6 +43,7 @@ model Post {
   comments    Comment[]
   createdAt   DateTime    @default(now())
   savedBy     SavedPost[]
+  reports     Report[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -87,6 +89,17 @@ model Notification {
   mediaUrl   String
   mediaTitle String
   user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id         String   @id @default(uuid())
+  reporterId String
+  createdAt  DateTime @default(now())
+  postId     String
+  reason     String
+
+  reporter User @relation(fields: [reporterId], references: [id])
+  post     Post @relation(fields: [postId], references: [id])
 }
 
 enum Role {
