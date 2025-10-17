@@ -28,7 +28,7 @@ model User {
   savedPosts    SavedPost[]
   comments      Comment[]
   notifications Notification[]
-  reports        Report[]
+  reports       Report[]
 }
 
 model Post {
@@ -92,11 +92,12 @@ model Notification {
 }
 
 model Report {
-  id         String   @id @default(uuid())
+  id         String       @id @default(uuid())
   reporterId String
-  createdAt  DateTime @default(now())
+  createdAt  DateTime     @default(now())
   postId     String
   reason     String
+  status     ReportStatus @default(PENDING)
 
   reporter User @relation(fields: [reporterId], references: [id])
   post     Post @relation(fields: [postId], references: [id])
@@ -116,4 +117,9 @@ enum PostStatus {
 enum NotificationType {
   MEDIA_APPROVED
   MEDIA_REJECTED
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ReportStatus } from "../generated/prisma";
 
 export const SignupSchema = z.object({
   firstname: z.string(),
@@ -32,4 +33,8 @@ export const PostCreateSchema = z.object({
 export const ReportSchema = z.object({
   reason : z.string(),
   postId : z.string()
+})
+
+export const UpdateReportStatusSchema = z.object({
+  status : z.enum(ReportStatus),
 })

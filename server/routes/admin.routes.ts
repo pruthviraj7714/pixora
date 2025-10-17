@@ -236,7 +236,7 @@ adminRouter.get("/media/list", adminMiddleware, async (req, res) => {
       include: {
         user: { select: { id: true, username: true, email: true } },
         _count: {
-          select: { comments: true, savedBy: true, likedBy : true },
+          select: { comments: true, savedBy: true, likedBy: true },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -367,7 +367,7 @@ adminRouter.get("/monthly-overview", adminMiddleware, async (req, res) => {
     const formatToMonth = (data: any[]) => {
       const result = Array(12).fill(0);
       data.forEach((d) => {
-        const month = new Date(d.createdAt || d.likedAt).getMonth(); 
+        const month = new Date(d.createdAt || d.likedAt).getMonth();
         result[month] += d._count._all;
       });
       return result;
@@ -384,9 +384,37 @@ adminRouter.get("/monthly-overview", adminMiddleware, async (req, res) => {
     return res.status(200).json(response);
   } catch (error) {
     res.status(500).json({
-      message : "Internal Server Error"
-    })
+      message: "Internal Server Error",
+    });
   }
-})
+});
+
+adminRouter.get("/pending-reports", adminMiddleware, async (req, res) => {
+  try {
+    const reports = await prisma.report.findMany({
+      where: {
+        status: "PENDING",
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        post: {
+          select: {
+            image: true,
+            title: true,
+            description: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json(reports || []);
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
 
 export default adminRouter;
