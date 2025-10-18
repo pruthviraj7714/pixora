@@ -182,7 +182,7 @@ adminRouter.get("/users/list", adminMiddleware, async (req, res) => {
   }
 });
 
-adminRouter.get("/:id", adminMiddleware, async (req, res) => {
+adminRouter.get("/users/user/:id", adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -216,17 +216,6 @@ adminRouter.get("/:id", adminMiddleware, async (req, res) => {
     res.json(userWithoutPassword);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch user details" });
-  }
-});
-
-adminRouter.delete("/:id", adminMiddleware, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    await prisma.user.delete({ where: { id } }),
-      res.status(200).json({ message: "User deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to delete user" });
   }
 });
 

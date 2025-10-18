@@ -25,12 +25,15 @@ import {
 } from "@/types/admin";
 import { Button } from "@/components/ui/button";
 
+type TAB = "overview" | "users" | "media" | "approvals" | "reports";
+
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState<TAB>("overview");
   const [dashboardData, setDashboardData] =
     useState<IAdminDashboardData | null>(null);
   const [usersData, setUsersData] = useState<IUsersData | null>(null);
   const [mediaData, setMediaData] = useState<IAdminMedia | null>(null);
+  const [reportsData, setReportsData] = useState(null);
   const [pendingPosts, setPendingPosts] = useState<IPost[]>([]);
   const [allUsers, setAllUsers] = useState<IUser[]>([]);
   const [allPosts, setAllPosts] = useState<IPost[]>([]);
@@ -91,6 +94,14 @@ export default function AdminDashboard() {
             "/admin/pending-approvals"
           );
           setPendingPosts(pending);
+          break;
+        }
+
+        case "reports": {
+          const { data: reports } = await axiosAuth.get(
+            "/admin/pending-reports"
+          );
+          setReportsData(reports);
           break;
         }
       }
@@ -190,7 +201,7 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex space-x-4 mb-8 border-b">
-          {["overview", "users", "media", "approvals"].map((tab) => (
+          {["overview", "users", "media", "approvals", "reports"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -600,6 +611,93 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))
+            )}
+          </div>
+        )}
+
+        {activeTab === "reports" && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Pending Reports
+              </h2>
+            </div>
+            {!reportsData ||
+            (Array.isArray(reportsData) && reportsData.length === 0) ? (
+              <div className="flex items-center justify-center min-h-[50vh] text-gray-500 text-lg">
+                No pending reports
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Report ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Reported Content
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Reported By
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Reason
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {Array.isArray(reportsData) &&
+                      reportsData.map((report: any) => (
+                        <tr key={report.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            #{report.id?.slice(0, 8)}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            <div className="max-w-xs truncate">
+                              {report.contentType === "POST"
+                                ? "Post"
+                                : "Comment"}
+                              :{" "}
+                              {report.content?.title ||
+                                report.content?.text ||
+                                "N/A"}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {report.reporter?.username || "Unknown"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            <div className="max-w-xs truncate">
+                              {report.reason || "No reason provided"}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {report.createdAt
+                              ? new Date(report.createdAt).toLocaleDateString()
+                              : "N/A"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex space-x-2">
+                              <button className="text-blue-600 hover:text-blue-900">
+                                View
+                              </button>
+                              <button className="text-red-600 hover:text-red-900">
+                                Remove
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         )}
