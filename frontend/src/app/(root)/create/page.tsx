@@ -82,6 +82,7 @@ export default function CreatePost() {
       });
       toast.success("Post Created Successfully", {
         description: "Your post has been submitted and is awaiting admin approval.",
+        position : "top-center"
       });
       router.push("/home");
     } catch (error: any) {

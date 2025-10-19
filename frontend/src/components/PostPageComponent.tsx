@@ -4,15 +4,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Share2,
-  MoreHorizontal,
-  Send,
-  Check,
-  Heart,
-} from "lucide-react";
+import { Share2, MoreHorizontal, Send, Check, Heart } from "lucide-react";
 import CommentBox from "./CommentBox";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   DropdownMenu,
@@ -33,7 +27,9 @@ export default function PostPageComponent({ postId }: { postId: string }) {
   const [category, setCategory] = useState(null);
   const [similarPosts, setSimilarPosts] = useState<IPost[]>([]);
   const router = useRouter();
+  const [showReportModel, setShowReportModel] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [reportReason, setReportReason] = useState("");
   const { data } = useSession();
 
   const getPostInfo = async () => {
@@ -53,7 +49,7 @@ export default function PostPageComponent({ postId }: { postId: string }) {
         isLiked: info.likedBy.length > 0 ? true : false,
         likes: info._count.likedBy,
       });
-      setCategory(info.category)
+      setCategory(info.category);
     } catch (error: any) {
       toast.error(
         error?.response?.data.message || "Failed to load Post information"
@@ -221,17 +217,39 @@ export default function PostPageComponent({ postId }: { postId: string }) {
 
   const fetchSimilarImagesForGivenCategory = async () => {
     try {
-      const res = await axios.get(`${BACKEND_URL}/posts/similar-images?category=${category}`, {
-        headers : {
-          Authorization : `Bearer ${data?.accessToken}`
+      const res = await axios.get(
+        `${BACKEND_URL}/posts/similar-images?category=${category}`,
+        {
+          headers: {
+            Authorization: `Bearer ${data?.accessToken}`,
+          },
         }
-      });
-      const posts = res.data.filter((post : IPost) => post.id !== postId);
+      );
+      const posts = res.data.filter((post: IPost) => post.id !== postId);
       setSimilarPosts(posts);
-    } catch (error : any) {
-      toast.error(error.response.data.message || error.message)
+    } catch (error: any) {
+      toast.error(error.response.data.message || error.message);
     }
-  }
+  };
+
+  const handleReportPost = async () => {
+    try {
+      setShowReportModel(true);
+    } catch (error) {
+      toast.error("Failed to report post");
+    }
+  };
+
+  const reportPost = async () => {
+    try {
+      toast.info("Report Successfully Submitted", {
+        position: "top-center",
+      });
+      router.push("/home");
+    } catch (error) {
+      toast.error("Failed to Report Post");
+    }
+  };
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -274,9 +292,23 @@ export default function PostPageComponent({ postId }: { postId: string }) {
                         <MoreHorizontal className="h-6 w-6 text-gray-600" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-gray-200 hover:bg-gray-300 ">
+                    <DropdownMenuContent className="">
                       <DropdownMenuItem
-                        onClick={deletePost}
+                        onClick={handleReportPost}
+                        className="cursor-pointer"
+                      >
+                        <div className="hover:text-red-500">Report Post</div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          if (
+                            confirm(
+                              "are you sure you want to delete this post?"
+                            )
+                          ) {
+                            await deletePost();
+                          }
+                        }}
                         className="cursor-pointer"
                       >
                         <div className="hover:text-red-500">Delete</div>
@@ -427,6 +459,38 @@ export default function PostPageComponent({ postId }: { postId: string }) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {showReportModel && (
+        <div className="fixed inset-0 backdrop-blur-lg bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold mb-4">Report Post</h3>
+            <p className="text-gray-600 mb-4">Provide a reason for Report:</p>
+            <textarea
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2 mb-4 h-32"
+              placeholder="Enter report reason..."
+            />
+            <div className="flex space-x-2">
+              <button
+                onClick={reportPost}
+                className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Confirm Report
+              </button>
+              <button
+                onClick={() => {
+                  setShowReportModel(false);
+                  setReportReason("");
+                }}
+                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
