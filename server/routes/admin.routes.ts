@@ -395,6 +395,13 @@ adminRouter.get("/pending-reports", adminMiddleware, async (req, res) => {
             description: true,
           },
         },
+        reporter : {
+          select : {
+            username : true,
+            firstname : true,
+            lastname : true
+          }
+        }
       },
     });
 
