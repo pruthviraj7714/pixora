@@ -413,4 +413,23 @@ adminRouter.get("/pending-reports", adminMiddleware, async (req, res) => {
   }
 });
 
+adminRouter.get("/reports", adminMiddleware, async (req, res) => {
+  try {
+
+    const reports = await prisma.report.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        post: { select: { id: true, title: true, image: true } },
+        reporter: { select: { username: true } },
+      },
+    });
+    res.json(reports);
+
+  } catch (error) {
+    res.status(500).json({
+      message : "Internal Server Error"
+    })
+  }
+})
+
 export default adminRouter;
