@@ -242,6 +242,14 @@ export default function PostPageComponent({ postId }: { postId: string }) {
 
   const reportPost = async () => {
     try {
+      await axios.post(`${BACKEND_URL}/report`, {
+        reason : reportReason,
+        postId
+      }, {
+        headers : {
+          Authorization : `Bearer ${data?.accessToken}`
+        }
+      });
       toast.info("Report Successfully Submitted", {
         position: "top-center",
       });

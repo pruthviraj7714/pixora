@@ -24,6 +24,7 @@ import {
   IUsersData,
 } from "@/types/admin";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type TAB = "overview" | "users" | "media" | "approvals" | "reports";
 
@@ -44,6 +45,12 @@ export default function AdminDashboard() {
     url: string;
     title: string;
   } | null>(null);
+  const [isMediaRemoveModelOpen, setIsMediaRemoveModelOpen] = useState(false);
+  const [postToRemove, setPostToRemove] = useState<{
+    postId : string,
+    reportId : string
+  } | null>(null);
+  const [messageForRemovingPost, setMessageForRemovingPost] = useState("");
   const { data, status } = useSession();
 
   useEffect(() => {
@@ -142,6 +149,33 @@ export default function AdminDashboard() {
       } catch (error) {
         console.error("Error deleting post:", error);
       }
+    }
+  };
+
+  const handleRemoveReportedPost = async (reportId: string) => {
+    try {
+      await axiosAuth.put(`/admin/remove-reported-post/${reportId}`, {
+        postId: postToRemove,
+        message: messageForRemovingPost,
+      });
+
+      toast.info("Post Successfully Removed", { position: "top-center" });
+      setIsMediaRemoveModelOpen(false);
+    } catch (error) {
+      toast.error("Error while removing Post");
+      console.error("Error removing post:", error);
+    }
+  };
+
+  const handleMarkPostAsReviewed = async (reportId: string) => {
+    try {
+      await axiosAuth.patch(`/admin/report/mark-reviewed/${reportId}`);
+
+      toast.success("Report Successfully Marked As Reviewed");
+    } catch (error) {
+      toast.error("Error while Marking Post As Reviewed", {
+        position: "top-center",
+      });
     }
   };
 
@@ -636,6 +670,9 @@ export default function AdminDashboard() {
                         Report ID
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Reported Media
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                         Reported Content
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -659,15 +696,28 @@ export default function AdminDashboard() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             #{report.id?.slice(0, 8)}
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {report.post.image ? (
+                              <img
+                                src={report.post.image}
+                                alt={report.post.title}
+                                className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                                onClick={() =>
+                                  setImageModal({
+                                    url: report.post.image,
+                                    title: report.post.title,
+                                  })
+                                }
+                              />
+                            ) : (
+                              <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                                <FileText className="w-6 h-6 text-gray-400" />
+                              </div>
+                            )}
+                          </td>
                           <td className="px-6 py-4 text-sm text-gray-900">
                             <div className="max-w-xs truncate">
-                              {report.contentType === "POST"
-                                ? "Post"
-                                : "Comment"}
-                              :{" "}
-                              {report.content?.title ||
-                                report.content?.text ||
-                                "N/A"}
+                              {report.post?.title || "N/A"}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -684,11 +734,24 @@ export default function AdminDashboard() {
                               : "N/A"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <div className="flex space-x-2">
-                              <button className="text-blue-600 hover:text-blue-900">
-                                View
+                            <div className="flex flex-col gap-y-1">
+                              <button
+                                onClick={() =>
+                                  handleMarkPostAsReviewed(report.id)
+                                }
+                                className="text-white hover:bg-yellow-400 cursor-pointer bg-yellow-500 py-2 rounded-2xl"
+                              >
+                                Mark as Reviewed
                               </button>
-                              <button className="text-red-600 hover:text-red-900">
+                              <button
+                                onClick={() => {
+                                  setPostToRemove({
+                                    postId : report.post.id,
+                                    reportId : report.id
+                                  })
+                                  setIsMediaRemoveModelOpen(true)}}
+                                className="text-white hover:bg-red-400 cursor-pointer bg-red-500 py-2 rounded-2xl"
+                              >
                                 Remove
                               </button>
                             </div>
@@ -759,6 +822,39 @@ export default function AdminDashboard() {
             <p className="text-center text-gray-700 mt-3 font-medium">
               {imageModal.title}
             </p>
+          </div>
+        </div>
+      )}
+       {isMediaRemoveModelOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold mb-4">Remove Post</h3>
+            <p className="text-gray-600 mb-4">
+              Provide a reason for removal:
+            </p>
+            <textarea
+              value={messageForRemovingPost}
+              onChange={(e) => setMessageForRemovingPost(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2 mb-4 h-32"
+              placeholder="Enter removal reason..."
+            />
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handleRemoveReportedPost(postToRemove?.reportId!)}
+                className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Confirm Remove
+              </button>
+              <button
+                onClick={() => {
+                  setIsMediaRemoveModelOpen(false);
+                  setMessageForRemovingPost("");
+                }}
+                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
