@@ -395,13 +395,13 @@ adminRouter.get("/pending-reports", adminMiddleware, async (req, res) => {
             description: true,
           },
         },
-        reporter : {
-          select : {
-            username : true,
-            firstname : true,
-            lastname : true
-          }
-        }
+        reporter: {
+          select: {
+            username: true,
+            firstname: true,
+            lastname: true,
+          },
+        },
       },
     });
 
@@ -415,7 +415,6 @@ adminRouter.get("/pending-reports", adminMiddleware, async (req, res) => {
 
 adminRouter.get("/reports", adminMiddleware, async (req, res) => {
   try {
-
     const reports = await prisma.report.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -424,12 +423,111 @@ adminRouter.get("/reports", adminMiddleware, async (req, res) => {
       },
     });
     res.json(reports);
-
   } catch (error) {
     res.status(500).json({
-      message : "Internal Server Error"
-    })
+      message: "Internal Server Error",
+    });
   }
-})
+});
+
+adminRouter.put(
+  "/remove-reported-post/:reportId",
+  adminMiddleware,
+  async (req, res) => {
+    try {
+      const { postId, message } = req.body;
+
+      const reportId = req.params.reportId;
+
+      const post = await prisma.post.findFirst({
+        where: {
+          id: postId,
+        },
+      });
+
+      if (!post) {
+        res.status(404).json({
+          message: "Post Not found!",
+        });
+        return;
+      }
+
+      await prisma.$transaction(async (tx) => {
+        await tx.report.update({
+          where: {
+            id: reportId,
+          },
+          data: {
+            status: "REVIEWED",
+          },
+        });
+        await tx.notification.create({
+          data: {
+            mediaTitle: post.title,
+            mediaUrl: post.image,
+            postId,
+            type: "MEDIA_REMOVED",
+            message,
+            userId: post.userId,
+          },
+        });
+
+        await tx.post.delete({
+          where: {
+            id: postId,
+          },
+        });
+      });
+
+      res.status(200).json({
+        message: "Post Successfully Removed",
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Internal Server Error",
+      });
+    }
+  }
+);
+
+adminRouter.patch(
+  "/report/mark-reviewed/:reportId",
+  adminMiddleware,
+  async (req, res) => {
+    try {
+      const { reportId } = req.params;
+
+      const report = await prisma.report.findUnique({
+        where: {
+          id: reportId,
+        },
+      });
+
+      if (!report) {
+        res.status(404).json({
+          message: "Report Not Found!",
+        });
+        return;
+      }
+
+      await prisma.report.update({
+        where: {
+          id: reportId,
+        },
+        data: {
+          status: "REVIEWED",
+        },
+      });
+
+      res.status(200).json({
+        message: "Report Successfully Reviewed",
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Internal Server Error",
+      });
+    }
+  }
+);
 
 export default adminRouter;

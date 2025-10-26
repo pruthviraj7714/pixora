@@ -117,6 +117,7 @@ enum PostStatus {
 enum NotificationType {
   MEDIA_APPROVED
   MEDIA_REJECTED
+  MEDIA_REMOVED
 }
 
 enum ReportStatus {
