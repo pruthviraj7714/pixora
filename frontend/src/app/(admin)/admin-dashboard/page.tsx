@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, FC } from "react";
 import {
   Users,
   FileText,
@@ -11,7 +11,7 @@ import {
   Trash2,
   X,
   Check,
-  IconNode,
+  LucideIcon,
 } from "lucide-react";
 import { BACKEND_URL } from "@/lib/config";
 import axios from "axios";
@@ -27,6 +27,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 type TAB = "overview" | "users" | "media" | "approvals" | "reports";
+
+interface StatCardProps {
+  icon?: LucideIcon; 
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  color: string; 
+}
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<TAB>("overview");
@@ -179,32 +187,21 @@ export default function AdminDashboard() {
     }
   };
 
-  const StatCard = ({
-    icon: Icon,
-    title,
-    value,
-    subtitle,
-    color,
-  }: {
-    icon: IconNode;
-    title: string;
-    value: string;
-    subtitle: string;
-    color: string;
-  }) => (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-gray-500 text-sm font-medium">{title}</p>
-          <p className="text-3xl font-bold mt-2">{value}</p>
-          {subtitle && <p className="text-gray-400 text-sm mt-1">{subtitle}</p>}
-        </div>
-        <div className={`p-3 rounded-full ${color}`}>
-          <Icon className="w-6 h-6 text-white" />
-        </div>
+  const StatCard: FC<StatCardProps> = ({ icon: Icon, title, value, subtitle, color }) => (
+    <div className={`p-5 rounded-2xl shadow-lg bg-gradient-to-r ${color} text-white`}>
+      <div className="flex items-center gap-3 mb-4">
+        {Icon && <Icon className="w-8 h-8 opacity-80" />}
+        <h4 className="text-lg font-semibold">{title}</h4>
       </div>
+  
+      <p className="text-4xl font-extrabold leading-tight">{value}</p>
+  
+      {subtitle && (
+        <p className="text-sm opacity-80 mt-2 font-medium">{subtitle}</p>
+      )}
     </div>
   );
+  
 
   if (loading && !dashboardData && !usersData && !mediaData) {
     return (
@@ -215,16 +212,18 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow">
+    <div className="bg-gray-900 min-h-screen text-white">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Admin Dashboard
-            </h1>
+          <div className="flex justify-between items-center py-8">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+                Admin Dashboard
+              </h1>
+              <p className="text-slate-400 text-sm mt-1">Manage content, users, and platform activity</p>
+            </div>
             <Button
-              className="cursor-pointer"
-              variant={"destructive"}
+              className="cursor-pointer bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl transition-all"
               onClick={async () => await signOut({ callbackUrl: "/" })}
             >
               Sign out
@@ -234,15 +233,15 @@ export default function AdminDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex space-x-4 mb-8 border-b">
+        <div className="flex space-x-1 mb-8 bg-slate-800/50 p-1 rounded-lg border border-slate-700/50 w-fit">
           {["overview", "users", "media", "approvals", "reports"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-4 px-4 font-medium capitalize transition-colors ${
+              className={`px-4 py-2 font-medium capitalize rounded-md transition-all ${
                 activeTab === tab
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/30"
               }`}
             >
               {tab}
@@ -257,68 +256,66 @@ export default function AdminDashboard() {
                 icon={Users}
                 title="Total Users"
                 value={dashboardData.overview.totalUsers}
-                color="bg-blue-500"
+                color="from-blue-600 to-blue-500"
               />
               <StatCard
                 icon={FileText}
                 title="Total Posts"
                 value={dashboardData.overview.totalPosts}
                 subtitle={`${dashboardData.overview.approvedPosts} approved`}
-                color="bg-green-500"
+                color="from-emerald-600 to-emerald-500"
               />
               <StatCard
                 icon={MessageSquare}
                 title="Total Comments"
                 value={dashboardData.overview.totalComments}
-                color="bg-purple-500"
+                color="from-purple-600 to-purple-500"
               />
               <StatCard
                 icon={TrendingUp}
                 title="Total Likes"
                 value={dashboardData.overview.totalLikes}
-                color="bg-pink-500"
+                color="from-pink-600 to-pink-500"
               />
             </div>
 
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Recent Posts
-                </h2>
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl shadow-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-800/50">
+                <h2 className="text-xl font-semibold text-white">Recent Posts</h2>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-slate-700/50">
+                  <thead className="bg-slate-900/50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Image
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Title
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Author
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Likes
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Date
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-slate-700/50">
                     {dashboardData.recentPosts.map((post) => (
-                      <tr key={post.id} className="hover:bg-gray-50">
+                      <tr key={post.id} className="hover:bg-slate-700/30 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           {post.image ? (
                             <img
-                              src={post.image}
+                              src={post.image || "/placeholder.svg"}
                               alt={post.title}
-                              className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                              className="w-16 h-16 object-cover rounded-lg cursor-pointer hover:opacity-80 transition shadow-md"
                               onClick={() =>
                                 setImageModal({
                                   url: post.image,
@@ -327,34 +324,28 @@ export default function AdminDashboard() {
                               }
                             />
                           ) : (
-                            <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                              <FileText className="w-6 h-6 text-gray-400" />
+                            <div className="w-16 h-16 bg-slate-700/50 rounded-lg flex items-center justify-center">
+                              <FileText className="w-6 h-6 text-slate-500" />
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                          {post.title}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {post.user.username}
-                        </td>
+                        <td className="px-6 py-4 text-sm font-medium text-white">{post.title}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{post.user.username}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2 py-1 text-xs rounded-full ${
+                            className={`px-3 py-1 text-xs font-semibold rounded-full ${
                               post.status === "APPROVED"
-                                ? "bg-green-100 text-green-800"
+                                ? "bg-emerald-500/20 text-emerald-300"
                                 : post.status === "PENDING"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
+                                  ? "bg-yellow-500/20 text-yellow-300"
+                                  : "bg-red-500/20 text-red-300"
                             }`}
                           >
                             {post.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {post._count.likedBy}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{post._count.likedBy}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                           {new Date(post.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
@@ -373,83 +364,74 @@ export default function AdminDashboard() {
                 icon={Users}
                 title="Total Users"
                 value={usersData.totalUsers}
-                color="bg-blue-500"
+                color="from-blue-600 to-blue-500"
               />
               <StatCard
                 icon={CheckCircle}
                 title="Active Users"
                 value={usersData.activeUsers}
                 subtitle="Last 30 days"
-                color="bg-green-500"
+                color="from-emerald-600 to-emerald-500"
               />
               <StatCard
                 icon={Users}
                 title="Admins"
                 value={usersData.adminCount}
-                color="bg-purple-500"
+                color="from-purple-600 to-purple-500"
               />
               <StatCard
                 icon={Users}
                 title="Regular Users"
                 value={usersData.regularUsers}
-                color="bg-gray-500"
+                color="from-slate-600 to-slate-500"
               />
             </div>
 
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  All Users
-                </h2>
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl shadow-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-800/50">
+                <h2 className="text-xl font-semibold text-white">All Users</h2>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-slate-700/50">
+                  <thead className="bg-slate-900/50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Username
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Email
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Role
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Posts
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Joined
                       </th>
-                      {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Actions
-                      </th> */}
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-slate-700/50">
                     {allUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {user.username}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.email}
-                        </td>
+                      <tr key={user.id} className="hover:bg-slate-700/30 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{user.username}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{user.email}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2 py-1 text-xs rounded-full ${
+                            className={`px-3 py-1 text-xs font-semibold rounded-full ${
                               user.role === "ADMIN"
-                                ? "bg-purple-100 text-purple-800"
-                                : "bg-gray-100 text-gray-800"
+                                ? "bg-purple-500/20 text-purple-300"
+                                : "bg-slate-500/20 text-slate-300"
                             }`}
                           >
                             {user.role}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                           {user._count?.posts || 0}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
@@ -468,76 +450,74 @@ export default function AdminDashboard() {
                 icon={FileText}
                 title="Total Posts"
                 value={mediaData.totalPosts}
-                color="bg-blue-500"
+                color="from-blue-600 to-blue-500"
               />
               <StatCard
                 icon={CheckCircle}
                 title="Approved"
                 value={mediaData.approvedPosts}
-                color="bg-green-500"
+                color="from-emerald-600 to-emerald-500"
               />
               <StatCard
                 icon={Clock}
                 title="Pending"
                 value={mediaData.pendingPosts}
-                color="bg-yellow-500"
+                color="from-yellow-600 to-yellow-500"
               />
               <StatCard
                 icon={TrendingUp}
                 title="Total Likes"
                 value={mediaData.totalLikes}
-                color="bg-pink-500"
+                color="from-pink-600 to-pink-500"
               />
               <StatCard
                 icon={MessageSquare}
                 title="Total Comments"
                 value={mediaData.totalComments}
-                color="bg-purple-500"
+                color="from-purple-600 to-purple-500"
               />
             </div>
 
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  All Media
-                </h2>
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl shadow-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-800/50">
+                <h2 className="text-xl font-semibold text-white">All Media</h2>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-slate-700/50">
+                  <thead className="bg-slate-900/50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Image
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Title
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Author
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Category
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Likes
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-slate-700/50">
                     {allPosts.map((post) => (
-                      <tr key={post.id} className="hover:bg-gray-50">
+                      <tr key={post.id} className="hover:bg-slate-700/30 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           {post.image ? (
                             <img
-                              src={post.image}
+                              src={post.image || "/placeholder.svg"}
                               alt={post.title}
-                              className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                              className="w-16 h-16 object-cover rounded-lg cursor-pointer hover:opacity-80 transition shadow-md"
                               onClick={() =>
                                 setImageModal({
                                   url: post.image,
@@ -546,41 +526,33 @@ export default function AdminDashboard() {
                               }
                             />
                           ) : (
-                            <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                              <FileText className="w-6 h-6 text-gray-400" />
+                            <div className="w-16 h-16 bg-slate-700/50 rounded-lg flex items-center justify-center">
+                              <FileText className="w-6 h-6 text-slate-500" />
                             </div>
                           )}
                         </td>
 
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {post.title}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {post.user.username}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {post.category}
-                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{post.title}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{post.user.username}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{post.category}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2 py-1 text-xs rounded-full ${
+                            className={`px-3 py-1 text-xs font-semibold rounded-full ${
                               post.status === "APPROVED"
-                                ? "bg-green-100 text-green-800"
+                                ? "bg-emerald-500/20 text-emerald-300"
                                 : post.status === "PENDING"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
+                                  ? "bg-yellow-500/20 text-yellow-300"
+                                  : "bg-red-500/20 text-red-300"
                             }`}
                           >
                             {post.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {post._count.likedBy}
-                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{post._count.likedBy}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <button
                             onClick={() => handleDeletePost(post.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-400 hover:text-red-300 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -597,46 +569,40 @@ export default function AdminDashboard() {
         {activeTab === "approvals" && (
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
             {pendingPosts.length === 0 ? (
-              <div className="flex items-center justify-center min-h-[50vh] text-gray-500 text-lg">
+              <div className="flex items-center justify-center min-h-[50vh] text-slate-400 text-lg">
                 No pending approvals
               </div>
             ) : (
               pendingPosts.map((post) => (
                 <div
                   key={post.id}
-                  className="bg-white rounded-lg shadow overflow-hidden"
+                  className="bg-slate-800/50 border border-slate-700/50 rounded-xl shadow-lg overflow-hidden hover:border-slate-600/50 transition-all"
                 >
                   {post.image && (
                     <img
-                      src={post.image}
+                      src={post.image || "/placeholder.svg"}
                       alt={post.title}
                       className="w-full h-auto object-contain"
                     />
                   )}
                   <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-2">{post.title}</h3>
-                    <p className="text-gray-600 text-sm mb-2">
-                      {post.description}
-                    </p>
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                      <span className="bg-gray-100 px-2 py-1 rounded">
-                        {post.category}
-                      </span>
-                      <span>
-                        {new Date(post.createdAt).toLocaleDateString()}
-                      </span>
+                    <h3 className="font-semibold text-lg text-white mb-2">{post.title}</h3>
+                    <p className="text-slate-400 text-sm mb-2">{post.description}</p>
+                    <div className="flex items-center justify-between text-sm text-slate-500 mb-4">
+                      <span className="bg-slate-700/50 px-2 py-1 rounded-md text-xs font-medium">{post.category}</span>
+                      <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                     </div>
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleApprove(post.id)}
-                        className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center justify-center"
+                        className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white px-4 py-2 rounded-lg hover:from-emerald-700 hover:to-emerald-600 flex items-center justify-center transition-all shadow-md"
                       >
                         <Check className="w-4 h-4 mr-2" />
                         Approve
                       </button>
                       <button
                         onClick={() => setSelectedPost(post)}
-                        className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 flex items-center justify-center"
+                        className="flex-1 bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-lg hover:from-red-700 hover:to-red-600 flex items-center justify-center transition-all shadow-md"
                       >
                         <X className="w-4 h-4 mr-2" />
                         Reject
@@ -650,58 +616,55 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === "reports" && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Pending Reports
-              </h2>
+          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl shadow-xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-800/50">
+              <h2 className="text-xl font-semibold text-white">Pending Reports</h2>
             </div>
-            {!reportsData ||
-            (Array.isArray(reportsData) && reportsData.length === 0) ? (
-              <div className="flex items-center justify-center min-h-[50vh] text-gray-500 text-lg">
+            {!reportsData || (Array.isArray(reportsData) && reportsData.length === 0) ? (
+              <div className="flex items-center justify-center min-h-[50vh] text-slate-400 text-lg">
                 No pending reports
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-slate-700/50">
+                  <thead className="bg-slate-900/50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Report ID
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Reported Media
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Reported Content
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Reported By
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Reason
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Date
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-slate-700/50">
                     {Array.isArray(reportsData) &&
                       reportsData.map((report: any) => (
-                        <tr key={report.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <tr key={report.id} className="hover:bg-slate-700/30 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                             #{report.id?.slice(0, 8)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {report.post.image ? (
                               <img
-                                src={report.post.image}
+                                src={report.post.image || "/placeholder.svg"}
                                 alt={report.post.title}
-                                className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                                className="w-16 h-16 object-cover rounded-lg cursor-pointer hover:opacity-80 transition shadow-md"
                                 onClick={() =>
                                   setImageModal({
                                     url: report.post.image,
@@ -710,47 +673,40 @@ export default function AdminDashboard() {
                                 }
                               />
                             ) : (
-                              <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                                <FileText className="w-6 h-6 text-gray-400" />
+                              <div className="w-16 h-16 bg-slate-700/50 rounded-lg flex items-center justify-center">
+                                <FileText className="w-6 h-6 text-slate-500" />
                               </div>
                             )}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            <div className="max-w-xs truncate">
-                              {report.post?.title || "N/A"}
-                            </div>
+                          <td className="px-6 py-4 text-sm text-white">
+                            <div className="max-w-xs truncate">{report.post?.title || "N/A"}</div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                             {report.reporter?.username || "Unknown"}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
-                            <div className="max-w-xs truncate">
-                              {report.reason || "No reason provided"}
-                            </div>
+                          <td className="px-6 py-4 text-sm text-slate-400">
+                            <div className="max-w-xs truncate">{report.reason || "No reason provided"}</div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {report.createdAt
-                              ? new Date(report.createdAt).toLocaleDateString()
-                              : "N/A"}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
+                            {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : "N/A"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <div className="flex flex-col gap-y-1">
                               <button
-                                onClick={() =>
-                                  handleMarkPostAsReviewed(report.id)
-                                }
-                                className="text-white hover:bg-yellow-400 cursor-pointer bg-yellow-500 py-2 rounded-2xl"
+                                onClick={() => handleMarkPostAsReviewed(report.id)}
+                                className="text-white hover:bg-yellow-600 cursor-pointer bg-yellow-500 py-2 rounded-lg transition-colors text-xs font-medium"
                               >
                                 Mark as Reviewed
                               </button>
                               <button
                                 onClick={() => {
                                   setPostToRemove({
-                                    postId : report.post.id,
-                                    reportId : report.id
+                                    postId: report.post.id,
+                                    reportId: report.id,
                                   })
-                                  setIsMediaRemoveModelOpen(true)}}
-                                className="text-white hover:bg-red-400 cursor-pointer bg-red-500 py-2 rounded-2xl"
+                                  setIsMediaRemoveModelOpen(true)
+                                }}
+                                className="text-white hover:bg-red-700 cursor-pointer bg-red-600 py-2 rounded-lg transition-colors text-xs font-medium"
                               >
                                 Remove
                               </button>
@@ -767,31 +723,29 @@ export default function AdminDashboard() {
       </div>
 
       {selectedPost && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-xl font-semibold mb-4">Reject Post</h3>
-            <p className="text-gray-600 mb-4">
-              Provide a reason for rejection:
-            </p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-800 border border-slate-700/50 rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-xl font-semibold text-white mb-4">Reject Post</h3>
+            <p className="text-slate-400 mb-4">Provide a reason for rejection:</p>
             <textarea
               value={rejectMessage}
               onChange={(e) => setRejectMessage(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 mb-4 h-32"
+              className="w-full bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-2 mb-4 h-32 text-white placeholder-slate-500 focus:border-purple-500/50 focus:outline-none transition"
               placeholder="Enter rejection reason..."
             />
             <div className="flex space-x-2">
               <button
                 onClick={() => handleReject(selectedPost.id)}
-                className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                className="flex-1 bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-lg hover:from-red-700 hover:to-red-600 transition-all shadow-md"
               >
                 Confirm Reject
               </button>
               <button
                 onClick={() => {
-                  setSelectedPost(null);
-                  setRejectMessage("");
+                  setSelectedPost(null)
+                  setRejectMessage("")
                 }}
-                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+                className="flex-1 bg-slate-700 text-slate-200 px-4 py-2 rounded-lg hover:bg-slate-600 transition-all"
               >
                 Cancel
               </button>
@@ -799,58 +753,56 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
       {imageModal && (
         <div
-          className="fixed inset-0 backdrop-blur-sm bg-transparent bg-opacity-30 flex items-center justify-center z-50"
+          className="fixed inset-0 backdrop-blur-md bg-black/40 flex items-center justify-center z-50"
           onClick={() => setImageModal(null)}
         >
           <div
-            className="relative bg-white bg-opacity-90 backdrop-blur-md rounded-lg p-4 max-w-[75vw] max-h-[75vh] mx-4"
+            className="relative bg-slate-800 border border-slate-700/50 rounded-xl p-4 max-w-[75vw] max-h-[75vh] mx-4 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setImageModal(null)}
-              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 z-10 bg-white rounded-full p-1"
+              className="absolute top-3 right-3 text-slate-400 hover:text-white z-10 bg-slate-700/50 rounded-full p-1 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
             <img
-              src={imageModal.url}
+              src={imageModal.url || "/placeholder.svg"}
               alt={imageModal.title}
               className="max-w-full max-h-[calc(75vh-6rem)] w-auto h-auto object-contain rounded-lg"
             />
-            <p className="text-center text-gray-700 mt-3 font-medium">
-              {imageModal.title}
-            </p>
+            <p className="text-center text-slate-300 mt-3 font-medium">{imageModal.title}</p>
           </div>
         </div>
       )}
-       {isMediaRemoveModelOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-xl font-semibold mb-4">Remove Post</h3>
-            <p className="text-gray-600 mb-4">
-              Provide a reason for removal:
-            </p>
+
+      {isMediaRemoveModelOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-800 border border-slate-700/50 rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-xl font-semibold text-white mb-4">Remove Post</h3>
+            <p className="text-slate-400 mb-4">Provide a reason for removal:</p>
             <textarea
               value={messageForRemovingPost}
               onChange={(e) => setMessageForRemovingPost(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 mb-4 h-32"
+              className="w-full bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-2 mb-4 h-32 text-white placeholder-slate-500 focus:border-purple-500/50 focus:outline-none transition"
               placeholder="Enter removal reason..."
             />
             <div className="flex space-x-2">
               <button
                 onClick={() => handleRemoveReportedPost(postToRemove?.reportId!)}
-                className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                className="flex-1 bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-lg hover:from-red-700 hover:to-red-600 transition-all shadow-md"
               >
                 Confirm Remove
               </button>
               <button
                 onClick={() => {
-                  setIsMediaRemoveModelOpen(false);
-                  setMessageForRemovingPost("");
+                  setIsMediaRemoveModelOpen(false)
+                  setMessageForRemovingPost("")
                 }}
-                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+                className="flex-1 bg-slate-700 text-slate-200 px-4 py-2 rounded-lg hover:bg-slate-600 transition-all"
               >
                 Cancel
               </button>
