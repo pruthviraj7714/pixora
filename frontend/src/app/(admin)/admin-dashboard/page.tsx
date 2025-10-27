@@ -20,6 +20,7 @@ import { IPost } from "@/types/post";
 import {
   IAdminDashboardData,
   IAdminMedia,
+  IReportsData,
   IUser,
   IUsersData,
 } from "@/types/admin";
@@ -42,7 +43,7 @@ export default function AdminDashboard() {
     useState<IAdminDashboardData | null>(null);
   const [usersData, setUsersData] = useState<IUsersData | null>(null);
   const [mediaData, setMediaData] = useState<IAdminMedia | null>(null);
-  const [reportsData, setReportsData] = useState(null);
+  const [reportsData, setReportsData] = useState<IReportsData[] | null>(null);
   const [pendingPosts, setPendingPosts] = useState<IPost[]>([]);
   const [allUsers, setAllUsers] = useState<IUser[]>([]);
   const [allPosts, setAllPosts] = useState<IPost[]>([]);
@@ -58,7 +59,9 @@ export default function AdminDashboard() {
     postId : string,
     reportId : string
   } | null>(null);
-  const [messageForRemovingPost, setMessageForRemovingPost] = useState("");
+  const [messageForRemovingPost, setMessageForRemovingPost] = useState<string>("");
+  const [reportFilter, setReportFilter] = useState("pending");
+  const [pendingReportsCount, setPendingReportsCount] = useState<number>(0);
   const { data, status } = useSession();
 
   useEffect(() => {
@@ -114,9 +117,10 @@ export default function AdminDashboard() {
 
         case "reports": {
           const { data: reports } = await axiosAuth.get(
-            "/admin/pending-reports"
+            "/admin/reports"
           );
           setReportsData(reports);
+          setPendingReportsCount(reports.filter((r : IReportsData) => r.status === "PENDING").length)
           break;
         }
       }
@@ -163,12 +167,13 @@ export default function AdminDashboard() {
   const handleRemoveReportedPost = async (reportId: string) => {
     try {
       await axiosAuth.put(`/admin/remove-reported-post/${reportId}`, {
-        postId: postToRemove,
+        postId: postToRemove?.postId,
         message: messageForRemovingPost,
       });
 
       toast.info("Post Successfully Removed", { position: "top-center" });
       setIsMediaRemoveModelOpen(false);
+      fetchData();
     } catch (error) {
       toast.error("Error while removing Post");
       console.error("Error removing post:", error);
@@ -179,6 +184,7 @@ export default function AdminDashboard() {
     try {
       await axiosAuth.patch(`/admin/report/mark-reviewed/${reportId}`);
 
+      fetchData();
       toast.success("Report Successfully Marked As Reviewed");
     } catch (error) {
       toast.error("Error while Marking Post As Reviewed", {
@@ -202,7 +208,6 @@ export default function AdminDashboard() {
     </div>
   );
   
-
   if (loading && !dashboardData && !usersData && !mediaData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -237,7 +242,7 @@ export default function AdminDashboard() {
           {["overview", "users", "media", "approvals", "reports"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => setActiveTab(tab as TAB)}
               className={`px-4 py-2 font-medium capitalize rounded-md transition-all ${
                 activeTab === tab
                   ? "bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg"
@@ -615,111 +620,164 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === "reports" && (
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl shadow-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-800/50">
-              <h2 className="text-xl font-semibold text-white">Pending Reports</h2>
-            </div>
-            {!reportsData || (Array.isArray(reportsData) && reportsData.length === 0) ? (
-              <div className="flex items-center justify-center min-h-[50vh] text-slate-400 text-lg">
-                No pending reports
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-700/50">
-                  <thead className="bg-slate-900/50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                        Report ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                        Reported Media
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                        Reported Content
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                        Reported By
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                        Reason
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-700/50">
-                    {Array.isArray(reportsData) &&
-                      reportsData.map((report: any) => (
-                        <tr key={report.id} className="hover:bg-slate-700/30 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
-                            #{report.id?.slice(0, 8)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {report.post.image ? (
-                              <img
-                                src={report.post.image || "/placeholder.svg"}
-                                alt={report.post.title}
-                                className="w-16 h-16 object-cover rounded-lg cursor-pointer hover:opacity-80 transition shadow-md"
-                                onClick={() =>
-                                  setImageModal({
-                                    url: report.post.image,
-                                    title: report.post.title,
-                                  })
-                                }
-                              />
-                            ) : (
-                              <div className="w-16 h-16 bg-slate-700/50 rounded-lg flex items-center justify-center">
-                                <FileText className="w-6 h-6 text-slate-500" />
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-white">
-                            <div className="max-w-xs truncate">{report.post?.title || "N/A"}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
-                            {report.reporter?.username || "Unknown"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-slate-400">
-                            <div className="max-w-xs truncate">{report.reason || "No reason provided"}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
-                            {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : "N/A"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <div className="flex flex-col gap-y-1">
-                              <button
-                                onClick={() => handleMarkPostAsReviewed(report.id)}
-                                className="text-white hover:bg-yellow-600 cursor-pointer bg-yellow-500 py-2 rounded-lg transition-colors text-xs font-medium"
-                              >
-                                Mark as Reviewed
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setPostToRemove({
-                                    postId: report.post.id,
-                                    reportId: report.id,
-                                  })
-                                  setIsMediaRemoveModelOpen(true)
-                                }}
-                                className="text-white hover:bg-red-700 cursor-pointer bg-red-600 py-2 rounded-lg transition-colors text-xs font-medium"
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+{activeTab === "reports" && (
+  <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl shadow-xl overflow-hidden">
+    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-800/50">
+      <h2 className="text-xl font-semibold text-white">Reports</h2>
+
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setReportFilter("pending")}
+          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            reportFilter === "pending"
+              ? "bg-yellow-500/90 text-black"
+              : "bg-slate-700/50 text-slate-300 hover:bg-slate-700/70"
+          }`}
+        >
+          Pending <span className="ml-1 text-xs bg-slate-900/40 text-yellow-300 px-2 py-0.5 rounded-md">{pendingReportsCount}</span>
+        </button>
+        <button
+          onClick={() => setReportFilter("all")}
+          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            reportFilter === "all"
+              ? "bg-blue-500/90 text-white"
+              : "bg-slate-700/50 text-slate-300 hover:bg-slate-700/70"
+          }`}
+        >
+          All <span className="ml-1 text-xs bg-slate-900/40 text-blue-300 px-2 py-0.5 rounded-md">{reportsData?.length}</span>
+        </button>
+      </div>
+    </div>
+
+    {!reportsData || (Array.isArray(reportsData) && reportsData.length === 0) ? (
+      <div className="flex items-center justify-center min-h-[50vh] text-slate-400 text-lg">
+        {reportFilter === "pending" ? "No pending reports" : "No reports found"}
+      </div>
+    ) : (
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-slate-700/50">
+          <thead className="bg-slate-900/50">
+          <tr>
+  {[
+    "Report ID",
+    "Reported Media",
+    "Reported Content",
+    "Reported By",
+    "Reason",
+    "Date",
+    "Status",
+    ...(reportFilter === "PENDING" ? ["Actions"] : []),
+  ].map((heading) => (
+    <th
+      key={heading}
+      className="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider"
+    >
+      {heading}
+    </th>
+  ))}
+</tr>
+
+          </thead>
+          <tbody className="divide-y divide-slate-700/50">
+            {reportsData && reportsData.length > 0 && reportsData.filter((r) => reportFilter === "pending" ? r.status === "PENDING" : r.status === "REVIEWED").map((report: any) => (
+              <tr
+                key={report.id}
+                className={`hover:bg-slate-700/30 transition-colors ${
+                  report.reviewed ? "opacity-80" : ""
+                }`}
+              >
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
+                  #{report.id?.slice(0, 8)}
+                </td>
+
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {report.post.image ? (
+                    <img
+                      src={report.post.image}
+                      alt={report.post.title}
+                      className="w-16 h-16 object-cover rounded-lg cursor-pointer hover:opacity-80 transition shadow-md"
+                      onClick={() =>
+                        setImageModal({
+                          url: report.post.image,
+                          title: report.post.title,
+                        })
+                      }
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-slate-700/50 rounded-lg flex items-center justify-center">
+                      <FileText className="w-6 h-6 text-slate-500" />
+                    </div>
+                  )}
+                </td>
+
+                <td className="px-6 py-4 text-sm text-white">
+                  <div className="max-w-xs truncate">{report.post?.title || "N/A"}</div>
+                </td>
+
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
+                  {report.reporter?.username || "Unknown"}
+                </td>
+
+                <td className="px-6 py-4 text-sm text-slate-400">
+                  <div className="max-w-xs truncate">
+                    {report.reason || "No reason provided"}
+                  </div>
+                </td>
+
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
+                  {report.createdAt
+                    ? new Date(report.createdAt).toLocaleDateString()
+                    : "N/A"}
+                </td>
+
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  {report.status === "REVIEWED" ? (
+                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-600/30 text-green-300 border border-green-600/40">
+                      Reviewed
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-yellow-600/30 text-yellow-300 border border-yellow-600/40">
+                      Pending
+                    </span>
+                  )}
+                </td>
+                  {reportFilter === "pending" && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {report.status === "PENDING" ? (
+                        <div className="flex flex-col gap-y-1">
+                          <button
+                            onClick={() => handleMarkPostAsReviewed(report.id)}
+                            className="text-white hover:bg-yellow-600 cursor-pointer bg-yellow-500 py-2 rounded-lg transition-colors text-xs font-medium"
+                          >
+                            Mark as Reviewed
+                          </button>
+                          <button
+                            onClick={() => {
+                              setPostToRemove({
+                                postId: report.post.id,
+                                reportId: report.id,
+                              })
+                              setIsMediaRemoveModelOpen(true)
+                            }}
+                            className="text-white hover:bg-red-700 cursor-pointer bg-red-600 py-2 rounded-lg transition-colors text-xs font-medium"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-slate-500 italic text-xs">No actions available</div>
+                      )}
+                    </td>
+                  )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+)}
+
       </div>
 
       {selectedPost && (

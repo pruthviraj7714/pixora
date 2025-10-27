@@ -86,3 +86,20 @@ export interface IUsersData {
     createdAt: string;
   }[];
 }
+
+export interface IReportsData {
+  id: string;
+  reporterId: string;
+  createdAt: Date;
+  postId: string;
+  reason: string;
+  status: "REVIEWED" | "PENDING";
+  post: {
+    id: string;
+    title: string;
+    image: string;
+  };
+  reporter: {
+    username: string;
+  };
+}

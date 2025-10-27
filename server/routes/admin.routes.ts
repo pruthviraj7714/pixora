@@ -439,7 +439,7 @@ adminRouter.put(
 
       const reportId = req.params.reportId;
 
-      const post = await prisma.post.findFirst({
+      const post = await prisma.post.findUnique({
         where: {
           id: postId,
         },
@@ -472,9 +472,15 @@ adminRouter.put(
           },
         });
 
+        await tx.report.deleteMany({
+          where : {
+            postId : post.id
+          }
+        })
+        
         await tx.post.delete({
           where: {
-            id: postId,
+            id: post.id,
           },
         });
       });
@@ -483,6 +489,8 @@ adminRouter.put(
         message: "Post Successfully Removed",
       });
     } catch (error) {
+      console.error(error);
+      
       res.status(500).json({
         message: "Internal Server Error",
       });

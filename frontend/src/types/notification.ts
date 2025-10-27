@@ -1,7 +1,7 @@
 export interface INotification {
   id: string;
   userId: string;
-  type: "MEDIA_APPROVED" | "MEDIA_REJECTED";
+  type: "MEDIA_APPROVED" | "MEDIA_REJECTED" | "MEDIA_REMOVED";
   read: boolean;
   createdAt: string;
   message?: string;
