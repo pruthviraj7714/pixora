@@ -61,7 +61,7 @@ export default function LandingPage() {
 
         <section id="features" className="container mx-auto px-4 py-20">
           <h2 className="text-3xl font-bold mb-12 text-center text-gray-800">
-            Why Choose InterestGallery?
+            Why Choose Pixora?
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
@@ -105,7 +105,7 @@ export default function LandingPage() {
             Ready to Start Your Collection?
           </h2>
           <p className="text-xl mb-8 text-gray-600">
-            Join InterestGallery today and start curating your digital
+            Join Pixora today and start curating your digital
             inspiration board.
           </p>
           <Link href="/signup">
